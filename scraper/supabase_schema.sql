@@ -172,3 +172,31 @@ SELECT
   BOOL_OR(prime_days > 3) AS prolonged_delivery_detected
 FROM latest
 GROUP BY asin, sku, brand, category, deal_bucket;
+
+
+-- ============================================================
+-- ASIN LIST TABLE
+-- Synced by Claude via Monday.com MCP — no API token needed.
+-- Claude reads from Monday board 8574487078 and upserts here.
+-- Scrapers read from this table, never call Monday directly.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS asin_list (
+  id              BIGSERIAL PRIMARY KEY,
+  sku             TEXT NOT NULL UNIQUE,
+  asin            TEXT NOT NULL,
+  brand           TEXT,
+  category        TEXT,
+  deal_bucket     TEXT,
+  review_count    INT,
+  star_rating     NUMERIC(2,1),
+  competitor_asins TEXT[],          -- array of competitor ASIN strings
+  monday_url      TEXT,
+  active          BOOLEAN NOT NULL DEFAULT true,
+  synced_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_asin_list_sku ON asin_list (sku);
+CREATE INDEX IF NOT EXISTS idx_asin_list_asin ON asin_list (asin);
+CREATE INDEX IF NOT EXISTS idx_asin_list_active ON asin_list (active) WHERE active = true;
+CREATE INDEX IF NOT EXISTS idx_asin_list_brand ON asin_list (brand);
