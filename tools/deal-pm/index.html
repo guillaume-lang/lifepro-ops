@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deal PM — Lifepro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0f11;
+    --surface: #161719;
+    --surface2: #1e2022;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8e6e0;
+    --muted: #7a7870;
+    --muted2: #545250;
+    --amber: #d4860f;
+    --amber-light: #f5aa36;
+    --amber-dim: rgba(212,134,15,0.12);
+    --green: #3d8c5a;
+    --green-light: #52b876;
+    --blue: #2e6fa3;
+    --blue-light: #4a9fd4;
+    --red: #8c3d3d;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 48px 1fr;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    background: var(--surface);
+  }
+  .header-mark {
+    width: 20px; height: 20px;
+    background: var(--amber);
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    flex-shrink: 0;
+  }
+  .header-title {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .header-divider { width: 1px; height: 16px; background: var(--border2); }
+  .header-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .header-date {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    overflow-y: auto;
+    padding: 16px 0;
+  }
+  .sidebar-section { margin-bottom: 20px; }
+  .sidebar-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted2);
+    padding: 0 16px;
+    margin-bottom: 8px;
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.15s;
+    font-family: var(--mono);
+  }
+  .sidebar-item:hover { color: var(--text); }
+  .sidebar-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-amber { background: var(--amber); }
+  .dot-blue  { background: var(--blue-light); }
+  .dot-green { background: var(--green-light); }
+  .dot-red   { background: #c0504d; }
+  .dot-muted { background: var(--muted2); }
+
+  .event-card {
+    margin: 0 12px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    background: var(--surface2);
+  }
+  .event-card-name { font-size: 11px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .event-card-date { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .event-card-badge {
+    display: inline-block;
+    margin-top: 4px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .badge-urgent { background: rgba(192,80,77,0.2); color: #e07a78; }
+  .badge-plan   { background: var(--amber-dim); color: var(--amber-light); }
+  .badge-watch  { background: rgba(46,111,163,0.2); color: var(--blue-light); }
+
+  /* MAIN CHAT */
+  .main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Welcome */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0 4px;
+  }
+  .welcome-greeting {
+    font-family: var(--sans);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .welcome-greeting span { color: var(--amber-light); }
+  .welcome-sub {
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.7;
+  }
+  .chips-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    max-width: 560px;
+    margin-top: 4px;
+  }
+  .chip {
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    background: var(--surface);
+    transition: all 0.15s;
+    font-family: var(--mono);
+    line-height: 1.4;
+  }
+  .chip:hover {
+    border-color: var(--amber);
+    color: var(--amber-light);
+    background: var(--amber-dim);
+  }
+  .chip-icon {
+    display: block;
+    font-size: 11px;
+    color: var(--amber);
+    margin-bottom: 3px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Messages */
+  .msg { display: flex; flex-direction: column; gap: 4px; }
+  .msg-meta {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .msg-user .msg-meta { text-align: right; }
+  .msg-body {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.65;
+    max-width: 78%;
+    word-wrap: break-word;
+  }
+  .msg-user { align-items: flex-end; }
+  .msg-user .msg-body {
+    background: var(--amber-dim);
+    border: 1px solid rgba(212,134,15,0.2);
+    color: #dcc99e;
+    border-radius: 8px 8px 2px 8px;
+  }
+  .msg-assistant .msg-body {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px 8px 8px 2px;
+    max-width: 88%;
+  }
+  .msg-assistant .msg-body p { margin-bottom: 8px; }
+  .msg-assistant .msg-body p:last-child { margin-bottom: 0; }
+  .msg-assistant .msg-body ul, .msg-assistant .msg-body ol {
+    padding-left: 18px;
+    margin-bottom: 8px;
+  }
+  .msg-assistant .msg-body li { margin-bottom: 3px; }
+  .msg-assistant .msg-body strong { color: var(--amber-light); font-weight: 500; }
+  .msg-assistant .msg-body code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface2);
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: var(--green-light);
+  }
+  .msg-assistant .msg-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin: 8px 0;
+    font-family: var(--mono);
+  }
+  .msg-assistant .msg-body th {
+    text-align: left;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border2);
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .msg-assistant .msg-body td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .msg-assistant .msg-body h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--amber-light);
+    margin: 12px 0 5px;
+  }
+
+  /* Thinking indicator */
+  .thinking {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px 8px 8px 2px;
+    width: fit-content;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .thinking-dots { display: flex; gap: 3px; }
+  .thinking-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--amber);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+  .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse {
+    0%, 80%, 100% { opacity: 0.2; }
+    40% { opacity: 1; }
+  }
+
+  /* INPUT */
+  .input-area {
+    border-top: 1px solid var(--border);
+    padding: 12px 20px 14px;
+    background: var(--surface);
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .input-wrap {
+    flex: 1;
+    position: relative;
+  }
+  #user-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    resize: none;
+    min-height: 40px;
+    max-height: 120px;
+    transition: border-color 0.15s;
+    line-height: 1.5;
+  }
+  #user-input:focus { border-color: var(--amber); }
+  #user-input::placeholder { color: var(--muted2); }
+
+  #send-btn {
+    width: 38px; height: 38px;
+    border-radius: 7px;
+    border: 1px solid var(--amber);
+    background: var(--amber-dim);
+    color: var(--amber-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  #send-btn:hover { background: var(--amber); color: #1a1200; }
+  #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  #send-btn svg { width: 14px; height: 14px; }
+
+  /* Scrollbar */
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-track { background: transparent; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 0 12px; }
+
+  @media (max-width: 600px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-mark"></div>
+    <span class="header-title">Deal PM</span>
+    <div class="header-divider"></div>
+    <span class="header-sub">Lifepro · Amazon USA</span>
+    <span class="header-date" id="live-date"></span>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Upcoming Events</div>
+      <div class="event-card">
+        <div class="event-card-name">Easter</div>
+        <div class="event-card-date">Apr 5, 2026</div>
+        <span class="event-card-badge badge-plan">PLAN NOW</span>
+      </div>
+      <div class="event-card">
+        <div class="event-card-name">Mother's Day</div>
+        <div class="event-card-date">May 10, 2026</div>
+        <span class="event-card-badge badge-plan">PLAN NOW</span>
+      </div>
+      <div class="event-card">
+        <div class="event-card-name">Prime Day</div>
+        <div class="event-card-date">~Jul 2026</div>
+        <span class="event-card-badge badge-watch">WATCH</span>
+      </div>
+      <div class="event-card">
+        <div class="event-card-name">Back to School</div>
+        <div class="event-card-date">Aug–Sep 2026</div>
+        <span class="event-card-badge badge-watch">WATCH</span>
+      </div>
+      <div class="event-card">
+        <div class="event-card-name">Black Friday / BFCM</div>
+        <div class="event-card-date">Nov 27–30, 2026</div>
+        <span class="event-card-badge badge-watch">WATCH</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="sidebar-section" style="margin-top:16px;">
+      <div class="sidebar-label">Brands</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-amber"></span>Lifepro</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-blue"></span>Chai Vision</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-green"></span>Vibrapulse</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-muted"></span>PetCove</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-muted"></span>JoyBerri</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-muted"></span>Oaktiv</div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="sidebar-section" style="margin-top:16px;">
+      <div class="sidebar-label">Categories</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-amber"></span>Massagers</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-amber"></span>Red Light Therapy</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-blue"></span>Dumbbells</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-blue"></span>Home Gym</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-green"></span>Sauna</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-green"></span>Treadmill / Elliptical</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-muted"></span>Vibration Plates</div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="sidebar-section" style="margin-top:16px;">
+      <div class="sidebar-label">Deal Types</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-red"></span>Lightning Deal</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-red"></span>Deal of the Day</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-amber"></span>Prime Exclusive</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-blue"></span>Coupon</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-green"></span>Subscribe & Save</div>
+      <div class="sidebar-item"><span class="sidebar-dot dot-muted"></span>Promo Code</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="chat-area" id="chat-area">
+      <div class="welcome" id="welcome">
+        <div class="welcome-greeting">Good to see you, <span>Guillaume</span>.</div>
+        <div class="welcome-sub">I'm your deal planning PM. I know your brands, categories, deal types, submission windows, and the Amazon calendar. What do you need?</div>
+        <div class="chips-grid">
+          <div class="chip" onclick="sendChip(this.dataset.prompt)" data-prompt="Build a deal calendar for Q2 2026 across all brands. Include deal types, submission deadlines, and priority SKUs.">
+            <span class="chip-icon">CALENDAR</span>Q2 2026 deal calendar
+          </div>
+          <div class="chip" onclick="sendChip(this.dataset.prompt)" data-prompt="What's the submission deadline for a Lightning Deal targeting Mother's Day (May 10)?">
+            <span class="chip-icon">DEADLINE</span>Mother's Day LD deadline
+          </div>
+          <div class="chip" onclick="sendChip(this.dataset.prompt)" data-prompt="What deal strategy do you recommend for Prime Day 2026? Cover 1P (Vendor Central) and 3P (Seller Central) separately, by category.">
+            <span class="chip-icon">STRATEGY</span>Prime Day strategy
+          </div>
+          <div class="chip" onclick="sendChip(this.dataset.prompt)" data-prompt="Give me a deal eligibility checklist for Lightning Deals and Deals of the Day on 3P Seller Central.">
+            <span class="chip-icon">CHECKLIST</span>LD eligibility checklist
+          </div>
+          <div class="chip" onclick="sendChip(this.dataset.prompt)" data-prompt="Are there deal conflicts or cannibalization risks I should watch for when running coupons + Lightning Deals on the same ASIN simultaneously?">
+            <span class="chip-icon">RISK</span>Deal conflict analysis
+          </div>
+          <div class="chip" onclick="sendChip(this.dataset.prompt)" data-prompt="Walk me through a deal planning SOP: from identifying eligible SKUs to submitting deals in Seller Central and Vendor Central.">
+            <span class="chip-icon">SOP</span>Deal planning SOP
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea id="user-input" placeholder="Ask about deal strategy, deadlines, calendars, eligibility…" rows="1"></textarea>
+      </div>
+      <button id="send-btn" onclick="sendMessage()" title="Send">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="8" y1="14" x2="8" y2="2"/>
+          <polyline points="3,7 8,2 13,7"/>
+        </svg>
+      </button>
+    </div>
+  </main>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are a specialized Amazon deal planning project manager for Guillaume, Head of Amazon USA at Lifepro. You operate with deep expertise in Amazon deal mechanics, submission workflows, and calendar planning.
+
+CONTEXT:
+- Brands: Lifepro (flagship), Chai Vision, Vibrapulse, PetCove, JoyBerri, Oaktiv
+- Product categories: Massagers, Red Light Therapy, Dumbbells, Home Gym, Sauna, Treadmill/Elliptical, Vibration Plates
+- ~220 active SKUs across 1P (Vendor Central) and 3P (Seller Central)
+- Current date: March 18, 2026
+
+DEAL TYPES YOU MANAGE:
+1P (Vendor Central): Lightning Deals, Deal of the Day (DoTD), Best Deal, Promotional Discounts
+3P (Seller Central): Lightning Deals, Prime Exclusive Discounts (PED), Coupons, Promo Codes, Subscribe & Save boosts, Best Deal
+
+KEY AMAZON DEAL KNOWLEDGE:
+- Lightning Deal (3P): Submit 7–14 days before event; need 3+ star rating, Prime eligibility, history of sales; min 20% off current price; limited inventory slots
+- Lightning Deal (1P VC): Must be submitted via deal submission windows (Vendor Central → Merchandising → Promotions), lead time often 4–6 weeks for major events
+- Prime Exclusive Discounts: Prime-only badge, min 10% off, not restricted by rating — good for volume plays
+- Deal of the Day: Only available to invited vendors/sellers; highest traffic placement
+- Coupons: Can run 24/7, min 5% off, clip-based — stackable with other deals but watch margin compression
+- BFCM & Prime Day: Submission windows open ~6–8 weeks before the event; Prime Day window typically opens in May for July dates
+- Deal eligibility killers: price dropped below deal price in last 30 days, low review count (<3.5 stars), suppressed listing, FBA inventory issues
+
+UPCOMING 2026 DEAL CALENDAR:
+- Easter: Apr 5 → submit LDs by Mar 22 (URGENT)
+- Spring Sale (Apr): submit now
+- Mother's Day: May 10 → submit LDs/PEDs by Apr 26
+- Prime Day: ~Jul 14–15 2026 → VC deal window opens ~May, SC opens ~Jun
+- Back to School: Aug–Sep → submit by late Jul
+- Labor Day: Sep 7 → submit by late Aug
+- Fall Sale / Oct Prime Day (if applicable): Oct → watch for invite
+- Black Friday: Nov 27 → submit by Oct 5–12
+- Cyber Monday: Nov 30 → same window as BFCM
+- Holiday/Christmas: Dec → submit by mid-Oct for VC
+
+RESPONSE STYLE:
+- Concise, direct, actionable — no fluff
+- Use tables for calendars, deadlines, or comparisons
+- Use bullet lists for checklists and action items
+- Bold key dates, deadlines, and SKU-level notes
+- Flag risks clearly (⚠️) and priorities (🔴 urgent, 🟡 plan, 🟢 watch)
+- When giving timelines, always include the specific submission deadline, not just the event date
+- Format 1P and 3P separately when they differ`;
+
+let messages = [];
+let isLoading = false;
+
+function getDate() {
+  return new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+}
+document.getElementById('live-date').textContent = getDate();
+
+const textarea = document.getElementById('user-input');
+textarea.addEventListener('input', () => {
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+});
+textarea.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function sendChip(prompt) {
+  textarea.value = prompt;
+  sendMessage();
+}
+
+function appendMsg(role, html) {
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+
+  const area = document.getElementById('chat-area');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg msg-' + role;
+
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  meta.textContent = role === 'user' ? 'you' : 'deal pm';
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+  if (role === 'assistant') {
+    body.innerHTML = html;
+  } else {
+    body.textContent = html;
+  }
+
+  wrap.appendChild(meta);
+  wrap.appendChild(body);
+  area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+  return body;
+}
+
+function showThinking() {
+  const area = document.getElementById('chat-area');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg msg-assistant';
+  wrap.id = 'thinking-wrap';
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  meta.textContent = 'deal pm';
+  const body = document.createElement('div');
+  body.innerHTML = `<div class="thinking"><div class="thinking-dots"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div></div><span>Thinking…</span></div>`;
+  wrap.appendChild(meta);
+  wrap.appendChild(body);
+  area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeThinking() {
+  const el = document.getElementById('thinking-wrap');
+  if (el) el.remove();
+}
+
+function formatMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/### (.+)/g, '<h3>$1</h3>')
+    .replace(/## (.+)/g, '<h3>$1</h3>')
+    .replace(/^[•\-] (.+)/gm, '<li>$1</li>')
+    .replace(/^\d+\. (.+)/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]+?<\/li>)/g, '<ul>$1</ul>')
+    .replace(/<\/ul>\s*<ul>/g, '')
+    .replace(/\|(.+)\|/g, (match) => {
+      const cells = match.split('|').filter((c,i,a) => i>0 && i<a.length-1).map(c => c.trim());
+      if (cells.every(c => /^[-:]+$/.test(c))) return '';
+      const tag = cells.some(c => /^[\*\*]/.test(c)) ? 'th' : 'td';
+      return '<tr>' + cells.map(c => `<${tag}>${c.replace(/\*\*/g,'')}</${tag}>`).join('') + '</tr>';
+    })
+    .replace(/(<tr>[\s\S]+?<\/tr>)/g, (match) => {
+      if (match.includes('<th>')) return '<table><thead>' + match + '</thead><tbody>';
+      return match + '</tbody></table>';
+    })
+    .replace(/<\/tbody><\/table>[\s\S]*?<tbody>/g, '')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[hultop])(.+)$/gm, (m) => m ? m : '')
+    .replace(/^<\/p><p>$/gm, '')
+    .split('\n\n').map(p => p.startsWith('<') ? p : `<p>${p}</p>`).join('');
+}
+
+async function sendMessage() {
+  if (isLoading) return;
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+  isLoading = true;
+
+  appendMsg('user', text);
+  messages.push({ role: 'user', content: text });
+  showThinking();
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: messages
+      })
+    });
+
+    const data = await resp.json();
+    removeThinking();
+
+    const reply = data.content?.find(b => b.type === 'text')?.text || 'No response.';
+    messages.push({ role: 'assistant', content: reply });
+
+    appendMsg('assistant', formatMarkdown(reply));
+  } catch (err) {
+    removeThinking();
+    appendMsg('assistant', '<p style="color:#e07a78;">Connection error. Please try again.</p>');
+  }
+
+  document.getElementById('send-btn').disabled = false;
+  isLoading = false;
+}
+</script>
+</body>
+</html>
