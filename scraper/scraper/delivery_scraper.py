@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 from playwright.async_api import async_playwright, Page, BrowserContext
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from scraper.monday_client import fetch_all_asins
+from scraper.supabase_client import fetch_asin_list
 from scraper.supabase_client import upsert_delivery_results
 from scraper.alerts import send_teams_alert
 
@@ -264,8 +264,8 @@ async def _get_buybox_type(page: Page) -> Optional[str]:
 
 async def run_delivery_scrape():
     """Main entry point for delivery scrape job."""
-    print("[delivery] Fetching ASIN list from Monday.com...")
-    items = await fetch_all_asins()
+    print("[delivery] Loading ASIN list from Supabase...")
+    items = await fetch_asin_list()
 
     # Build work queue: own ASINs + deduplicated competitor ASINs
     # Own ASINs: scrape all zip codes
