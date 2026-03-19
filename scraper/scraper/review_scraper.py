@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 from playwright.async_api import async_playwright, Page
 
-from scraper.monday_client import fetch_all_asins
+from scraper.supabase_client import fetch_asin_list
 from scraper.supabase_client import get_last_review_snapshots, upsert_review_snapshots
 from scraper.alerts import send_teams_alert
 
@@ -120,8 +120,8 @@ def _detect_unmerge(current: Dict, previous: Dict) -> Dict:
 
 async def run_review_scrape():
     """Main entry point for review monitoring job."""
-    print("[reviews] Fetching ASIN list from Monday.com...")
-    items = await fetch_all_asins()
+    print("[reviews] Loading ASIN list from Supabase...")
+    items = await fetch_asin_list()
     print(f"[reviews] Monitoring {len(items)} ASINs")
 
     # Get last known snapshot for each ASIN from Supabase
