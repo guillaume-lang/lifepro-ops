@@ -2,7 +2,6 @@ name: Review Monitor
 
 on:
   schedule:
-    # 4x daily: 6am, 11am, 4pm, 9pm EST
     - cron: '0 11 * * *'
     - cron: '0 16 * * *'
     - cron: '0 21 * * *'
@@ -17,10 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Playwright + dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
         run: |
           pip install -r scraper/requirements.txt
-          playwright install chromium --with-deps
+
+      - name: Install Playwright browsers
+        run: |
+          python -m playwright install chromium
+          python -m playwright install-deps chromium
 
       - name: Run review monitor
         env:
