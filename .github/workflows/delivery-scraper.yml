@@ -27,7 +27,6 @@ jobs:
       - name: Run delivery scraper
         env:
           SCRAPER_MODE: delivery
-          MONDAY_API_TOKEN: ${{ secrets.MONDAY_API_TOKEN }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
