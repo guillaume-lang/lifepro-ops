@@ -4,7 +4,10 @@ import httpx
 from typing import List, Dict
 
 MONDAY_API_URL = "https://api.monday.com/v2"
-MONDAY_TOKEN = os.environ["MONDAY_API_TOKEN"]
+_RAW_TOKEN = os.environ["MONDAY_API_TOKEN"].strip()
+# Monday personal tokens are raw JWTs - strip "Bearer " if accidentally included
+MONDAY_TOKEN = _RAW_TOKEN.lstrip("Bearer ").lstrip("bearer ").strip()
+
 BOARD_ID = "8574487078"
 
 HEADERS = {
@@ -13,27 +16,33 @@ HEADERS = {
     "API-Version": "2024-01",
 }
 
-# Handles every delimiter variant seen in the board:
-# tabs, newlines, spaces, commas, semicolons
 ASIN_SPLIT_RE = re.compile(r"[\t\n\r,;|\s]+")
 
 def parse_competitor_asins(raw: str | None) -> List[str]:
     if not raw or raw.strip() in ("", "-", "N/A"):
         return []
     parts = ASIN_SPLIT_RE.split(raw.strip())
-    # ASIN = 10 chars, starts with B or numeric
     return [p.strip() for p in parts if re.match(r"^B[0-9A-Z]{9}$", p.strip())]
 
+async def test_connection():
+    """Quick auth test before running full fetch."""
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            MONDAY_API_URL,
+            json={"query": "{me{name email}}"},
+            headers=HEADERS
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        if "errors" in data:
+            raise ValueError(f"Monday API auth failed: {data['errors']}")
+        me = data.get("data", {}).get("me", {})
+        print(f"[monday] Connected as: {me.get('name')} ({me.get('email')})")
+        return True
+
 async def fetch_all_asins() -> List[Dict]:
-    """
-    Returns list of dicts:
-    {
-        sku, asin, brand, category, deal_bucket,
-        review_count, star_rating,
-        competitor_asins: [str],
-        monday_url
-    }
-    """
+    await test_connection()
+
     items = []
     cursor = None
 
@@ -83,6 +92,10 @@ async def fetch_all_asins() -> List[Dict]:
             )
             resp.raise_for_status()
             data = resp.json()
+
+            if "errors" in data:
+                print(f"[monday] API error: {data['errors']}")
+                break
 
             page = data["data"]["boards"][0]["items_page"]
             for item in page["items"]:
