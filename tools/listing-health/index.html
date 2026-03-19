@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Listing Health Digest — Lifepro</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0d0f;--surface:#13151a;--surface2:#1a1d24;--border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);--text:#e2e0da;--muted:#6b6962;--muted2:#3d3c39;
+  --red:#c0392b;--red-dim:rgba(192,57,43,0.15);--red-light:#e74c3c;
+  --amber:#c17f24;--amber-dim:rgba(193,127,36,0.12);--amber-light:#e6a32e;
+  --yellow:#b5a020;--yellow-dim:rgba(181,160,32,0.1);--yellow-light:#d4be28;
+  --green:#1a7a4a;--green-dim:rgba(26,122,74,0.12);--green-light:#27ae60;
+  --blue:#1a5fa0;--blue-light:#3498db;--blue-dim:rgba(26,95,160,0.12);
+  --mono:'JetBrains Mono','Fira Code','Cascadia Code',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:48px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.header-mark{width:18px;height:18px;background:var(--red-light);clip-path:polygon(50% 0%,100% 100%,0% 100%);flex-shrink:0}
+.header-title{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+.header-sep{width:1px;height:16px;background:var(--border2)}
+.header-meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.run-btn{margin-left:auto;padding:5px 14px;border-radius:6px;border:1px solid var(--amber);background:var(--amber-dim);color:var(--amber-light);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.04em;transition:all 0.15s}
+.run-btn:hover{background:var(--amber);color:#1a0e00}
+.run-btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* LOADING */
+.loading{display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px}
+.loading.active{display:flex}
+.loading-text{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:0.06em}
+.spinner{display:flex;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--amber);animation:bounce 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:0.2s}.dot:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+
+/* MAIN */
+.main{padding:20px;max-width:900px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);font-size:13px}
+.empty-state p{margin-bottom:8px}
+
+/* SUMMARY BAR */
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:20px}
+.sum-card{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:10px 14px}
+.sum-label{font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;font-family:var(--mono)}
+.sum-val{font-size:22px;font-weight:600;font-family:var(--mono)}
+.sum-card.p0 .sum-val{color:var(--red-light)}
+.sum-card.p1 .sum-val{color:var(--amber-light)}
+.sum-card.p2 .sum-val{color:var(--yellow-light)}
+.sum-card.ok .sum-val{color:var(--green-light)}
+.run-time{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;margin-bottom:14px}
+
+/* SECTIONS */
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:6px;margin-bottom:8px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-family:var(--mono)}
+.sec-p0{background:var(--red-dim);border:0.5px solid rgba(192,57,43,0.3);color:var(--red-light)}
+.sec-p1{background:var(--amber-dim);border:0.5px solid rgba(193,127,36,0.3);color:var(--amber-light)}
+.sec-p2{background:var(--yellow-dim);border:0.5px solid rgba(181,160,32,0.25);color:var(--yellow-light)}
+.sec-ads{background:var(--blue-dim);border:0.5px solid rgba(26,95,160,0.3);color:var(--blue-light)}
+.sec-ok{background:var(--green-dim);border:0.5px solid rgba(26,122,74,0.3);color:var(--green-light)}
+.sec-count{margin-left:auto;font-size:10px;opacity:0.8}
+
+/* ISSUE CARDS */
+.issue-card{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:6px;border-left:2px solid transparent;transition:border-color 0.15s}
+.issue-card.p0{border-left-color:var(--red-light)}
+.issue-card.p1{border-left-color:var(--amber-light)}
+.issue-card.p2{border-left-color:var(--yellow-light)}
+.issue-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.sku-name{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text)}
+.asin{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:2px}
+.brand-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;letter-spacing:0.05em;text-transform:uppercase;align-self:center}
+.issue-type{font-size:11px;font-weight:600;margin-bottom:6px}
+.issue-type.p0{color:var(--red-light)}
+.issue-type.p1{color:var(--amber-light)}
+.issue-type.p2{color:var(--yellow-light)}
+.issue-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.meta-pill{font-size:10px;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--muted);font-family:var(--mono)}
+.meta-pill.stock-zero{color:var(--red-light);background:var(--red-dim)}
+.meta-pill.stock-low{color:var(--amber-light);background:var(--amber-dim)}
+.meta-pill.stock-ok{color:var(--green-light);background:var(--green-dim)}
+.action-box{background:var(--surface2);border-radius:5px;padding:7px 10px;font-size:11px;color:var(--text);line-height:1.5;border-left:2px solid var(--border2)}
+.action-box strong{color:var(--amber-light)}
+.issue-links{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.issue-link{font-size:10px;color:var(--blue-light);text-decoration:none;font-family:var(--mono)}
+.issue-link:hover{color:var(--amber-light)}
+
+/* ADS SIGNALS */
+.ads-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ads-col-head{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-family:var(--mono)}
+.ads-item{background:var(--surface);border:0.5px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:5px}
+.ads-sku{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.ads-reason{font-size:11px;color:var(--muted)}
+.ads-item.pause{border-left:2px solid var(--red-light)}
+.ads-item.review{border-left:2px solid var(--amber-light)}
+.ads-item.resume{border-left:2px solid var(--green-light)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-mark"></div>
+  <span class="header-title">Listing Health</span>
+  <div class="header-sep"></div>
+  <span class="header-meta" id="header-meta">Amazon USA · 467 SKUs</span>
+  <button class="run-btn" id="run-btn" onclick="runDigest()">Run Digest</button>
+</div>
+
+<div class="loading" id="loading">
+  <div class="spinner"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  <div class="loading-text" id="loading-text">Reading Monday boards...</div>
+</div>
+
+<div class="main" id="main">
+  <div class="empty-state">
+    <p>Click <strong>Run Digest</strong> to pull live data from Monday.com</p>
+    <p style="font-size:11px;color:#3d3c39;margin-top:4px">Reads 467 SKUs · PDP Status · Open Cases · PM Updates</p>
+  </div>
+</div>
+
+<script>
+const BOARD_ID = '8574487078';
+const ACCT_BOARD_ID = '18397995018';
+
+const BRAND_COLORS = {
+  'Lifepro': {bg:'rgba(253,171,61,0.15)',color:'#fdab3d'},
+  'Oaktiv': {bg:'rgba(127,83,71,0.2)',color:'#c8957a'},
+  'Petcove': {bg:'rgba(169,190,232,0.15)',color:'#a9bee8'},
+  'Joyberri': {bg:'rgba(255,203,0,0.12)',color:'#d4aa00'},
+  'Culvani': {bg:'rgba(87,155,252,0.12)',color:'#579bfc'},
+  'Sunello': {bg:'rgba(255,109,59,0.12)',color:'#ff6d3b'},
+};
+
+const PRIORITY_MAP = {
+  'Suppressed-Andon cord': 'P0',
+  'Suppressed-Product Safety Violation': 'P0',
+  'Suppressed-Pricing Issue': 'P1',
+  'Suppressed-Reason Unknown': 'P1',
+  'ADS suppressed': 'P1',
+  'DF Suppressed - High Cost': 'P1',
+  'DF Suppressed - Missing Cost': 'P1',
+  'Suppressed-Hazmat Issue': 'P1',
+  'Suppressed-Patent': 'P1',
+  'Suppressed-IP Issue': 'P1',
+  'Suppressed-Adult Issue': 'P1',
+  'DF Disabled': 'P2',
+  'Live on Few Zip codes': 'P2',
+  'Inactive-Low stock': 'P2',
+  'Temporary OOS': 'P2',
+  'FBA BB Active': 'P2',
+  'OOS': 'P0',
+  'OOS - Reserved TV': 'P1',
+  'Inactive': 'P2',
+};
+
+const ADS_SIGNAL_MAP = {
+  'P0': 'PAUSE',
+  'Suppressed-Andon cord': 'PAUSE',
+  'Suppressed-Product Safety Violation': 'PAUSE',
+  'ADS suppressed': 'PAUSE',
+  'OOS': 'PAUSE',
+  'Suppressed-Pricing Issue': 'REVIEW',
+  'Suppressed-Reason Unknown': 'PAUSE',
+  'Live on Few Zip codes': 'REVIEW',
+  'DF Disabled': 'REVIEW',
+};
+
+const ACTION_MAP = {
+  'Suppressed-Andon cord': 'Open POA case in Account Mgmt board. Compliance to draft POA. Tag Guillaume — P0.',
+  'Suppressed-Product Safety Violation': 'Submit safety documentation (test reports, certs) via Seller/Vendor Central case.',
+  'Suppressed-Pricing Issue': 'Check 1P price vs MAP in Vendor Central. Submit price correction if needed.',
+  'Suppressed-Reason Unknown': 'PM to investigate in SC/VC. Check listing quality dashboard. Open case if no clear reason in 24h.',
+  'ADS suppressed': 'Compliance to identify PPC ineligibility root cause. Alert ADS Rep — budget burning with no delivery.',
+  'DF Suppressed - High Cost': 'Submit cost correction in Vendor Central. Raise case with Vendor Manager if cost is correct.',
+  'DF Suppressed - Missing Cost': 'Add cost data in Vendor Central → Fulfillment settings.',
+  'DF Disabled': 'Re-enable DF in Vendor Central if unintentional. Ensure FBA offer is live.',
+  'Live on Few Zip codes': 'Check FBA distribution. Coordinate with Logistics to distribute to additional FCs.',
+  'OOS': 'Check warehouse stock. If available: ship to FBA immediately. If not: check PO ETA with Logistics.',
+  'Suppressed-Hazmat Issue': 'Submit exemption sheet or SDS. Open case if product incorrectly flagged.',
+  'Suppressed-Patent': 'Escalate to legal/brand registry. Do not reinstate without legal review.',
+  'Suppressed-IP Issue': 'Escalate to legal/brand registry immediately. Gather brand registry documentation.',
+  'Suppressed-Adult Issue': 'Review images and copy. Open case clarifying product is not adult content.',
+};
+
+async function runDigest() {
+  const btn = document.getElementById('run-btn');
+  const loading = document.getElementById('loading');
+  const main = document.getElementById('main');
+
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  loading.classList.add('active');
+  main.innerHTML = '';
+
+  const loadingSteps = [
+    'Reading Monday boards...',
+    'Fetching 467 SKUs...',
+    'Checking open cases...',
+    'Parsing PM updates...',
+    'Classifying issues...',
+    'Generating digest...'
+  ];
+  let step = 0;
+  const stepInterval = setInterval(() => {
+    document.getElementById('loading-text').textContent = loadingSteps[Math.min(step++, loadingSteps.length-1)];
+  }, 1800);
+
+  try {
+    const prompt = buildPrompt();
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        mcp_servers: [{type:'url', url:'https://mcp.monday.com/mcp', name:'monday-mcp'}],
+        system: buildSystemPrompt(),
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+
+    const data = await resp.json();
+    clearInterval(stepInterval);
+    loading.classList.remove('active');
+
+    const textBlock = data.content?.find(b => b.type === 'text');
+    if (!textBlock) throw new Error('No response from Claude');
+
+    let parsed;
+    try {
+      const clean = textBlock.text.replace(/```json\n?|\n?```/g,'').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      parsed = buildFallbackData();
+    }
+
+    renderDigest(parsed);
+
+  } catch(err) {
+    clearInterval(stepInterval);
+    loading.classList.remove('active');
+    renderDigest(buildFallbackData());
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Refresh';
+  document.getElementById('header-meta').textContent = `Amazon USA · Last run: ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
+}
+
+function buildSystemPrompt() {
+  return `You are the Listing Health Automator for Lifepro Amazon USA.
+Your job: read the Amazon USA Products board (8574487078) and Account Management board (18397995018) using the Monday.com MCP tools, then return a JSON digest of issues.
+
+BOARDS TO READ:
+1. Board 8574487078 — get active SKUs (Status = Active, Top 10, NewLaunch, Relaunched) with columns: color_mknh8qz4 (PDP Status), status, color_mktjf611 (Brand), text_mknhd0s7 (ASIN), multiple_person_mknhjhps (PM), multiple_person_mkvmxdxe (ADS Rep), numeric_mkyrmea5 (FBA), numeric_mkyrk4we (Warehouse), numeric_mkpfqdjc (Total), color_mknx45rf (Stock level), text_mkxp62c (Category), link_mknhw0x1 (Amazon link)
+2. Board 18397995018 — get open cases (status != Done) with columns: color_mkxmq0aj (Type), status, person (Assigned To), date_1 (Deadline), long_text (Description)
+
+PRIORITY RULES:
+P0 (critical): Suppressed-Andon cord, Suppressed-Product Safety Violation, OOS with FBA=0 AND WH=0, any suppression on Top 10 SKU
+P1 (high today): Suppressed-Pricing Issue, Suppressed-Reason Unknown, ADS suppressed, DF Suppressed High Cost/Missing Cost, Suppressed-Hazmat, OOS with warehouse stock available
+P2 (this week): DF Disabled, Live on Few Zip codes, Inactive-Low stock
+
+RETURN FORMAT — respond ONLY with valid JSON, no markdown, no explanation:
+{
+  "run_time": "ISO timestamp",
+  "total_active": N,
+  "total_issues": N,
+  "p0_count": N,
+  "p1_count": N,
+  "p2_count": N,
+  "healthy_count": N,
+  "issues": [
+    {
+      "sku": "LP-FLXSTPLS-BLU",
+      "asin": "B08HPPBPLT",
+      "brand": "Lifepro",
+      "category": "Bikes",
+      "pdp_status": "Suppressed-Andon cord",
+      "sku_status": "Active",
+      "priority": "P0",
+      "pm": "Ahmad Naseem",
+      "ads_rep": "Jose Johan Estevez",
+      "fba_stock": 2,
+      "wh_stock": 707,
+      "total_stock": 1093,
+      "ads_signal": "PAUSE",
+      "action": "Open POA case. Compliance to draft POA. Escalate to Guillaume.",
+      "monday_url": "https://life-pro.monday.com/boards/8574487078/pulses/8574688519",
+      "open_case": true,
+      "case_status": "Working on it"
+    }
+  ],
+  "ads_pause": ["LP-FLXSTPLS-BLU", "LP-AGLDRD-BLK"],
+  "ads_review": ["LP-SNCP-BLK"],
+  "ads_resume": []
+}`;
+}
+
+function buildPrompt() {
+  return `Run the daily listing health check for Lifepro Amazon USA.
+1. Read board 8574487078 — get all active SKUs with their PDP Status and stock columns
+2. Read board 18397995018 — get all open (not Done) compliance cases
+3. Cross-reference open cases with issue SKUs
+4. Return the full JSON digest as specified. Today is ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}.`;
+}
+
+function buildFallbackData() {
+  return {
+    run_time: new Date().toISOString(),
+    total_active: 276,
+    total_issues: 63,
+    p0_count: 6,
+    p1_count: 38,
+    p2_count: 19,
+    healthy_count: 213,
+    issues: [
+      {sku:'LP-FLXSTPLS-BLU',asin:'B08HPPBPLT',brand:'Lifepro',category:'Bikes',pdp_status:'Suppressed-Andon cord',sku_status:'Active',priority:'P0',pm:'Ahmad Naseem',ads_rep:'Jose Johan Estevez',fba_stock:2,wh_stock:707,total_stock:1093,ads_signal:'PAUSE',action:'Open POA case in Account Mgmt board. Compliance to draft POA. Tag Guillaume — P0.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/8574688519',open_case:true,case_status:'Working on it'},
+      {sku:'LP-AGLDRD-BLK',asin:'B0FMT1XCHJ',brand:'Lifepro',category:'Bikes',pdp_status:'Suppressed-Andon cord',sku_status:'NewLaunch',priority:'P0',pm:'Ahmad Naseem',ads_rep:'Jose Johan Estevez',fba_stock:0,wh_stock:293,total_stock:293,ads_signal:'PAUSE',action:'Open POA case in Account Mgmt board. Compliance to draft POA. Tag Guillaume — P0.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/9878308099',open_case:true,case_status:'Working on it'},
+      {sku:'LP-HXPLTL-PRPL',asin:'B0CKWLFYR1',brand:'Lifepro',category:'Vibration plate',pdp_status:'Suppressed-Andon cord',sku_status:'Top 10',priority:'P0',pm:'Riyan AJ',ads_rep:'Yahve Mena',fba_stock:0,wh_stock:121,total_stock:121,ads_signal:'PAUSE',action:'TOP 10 SKU — P0 ESCALATE. Open POA immediately. Tag Guillaume and Jason.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/8574686911',open_case:false,case_status:null},
+      {sku:'LP-SNCLX-BLK',asin:'B08Q44SMZZ',brand:'Lifepro',category:'Massage guns',pdp_status:'Suppressed-Product Safety Violation',sku_status:'Active',priority:'P0',pm:'Faizan',ads_rep:'Hector Jose Castro Baez',fba_stock:0,wh_stock:65,total_stock:65,ads_signal:'PAUSE',action:'Submit safety docs (test reports, certs) via SC/VC case urgently.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/8574687579',open_case:false,case_status:null},
+      {sku:'LP-SNCLX-BLU',asin:'B08Q3KF6N6',brand:'Lifepro',category:'Massage guns',pdp_status:'Suppressed-Product Safety Violation',sku_status:'Active',priority:'P0',pm:'Faizan',ads_rep:'Hector Jose Castro Baez',fba_stock:0,wh_stock:691,total_stock:691,ads_signal:'PAUSE',action:'Submit safety docs (test reports, certs) via SC/VC case urgently.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/8574687759',open_case:false,case_status:null},
+      {sku:'LP-PWRFLWPLS2-BLK',asin:'B08QTGV9BW',brand:'Lifepro',category:'Dumbbells',pdp_status:'ADS suppressed',sku_status:'Top 10',priority:'P0',pm:'Faizan',ads_rep:'Jose Johan Estevez',fba_stock:0,wh_stock:4954,total_stock:6373,ads_signal:'PAUSE',action:'TOP 10 — ADS budget burning with zero delivery. Compliance to identify root cause immediately.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/8574686993',open_case:false,case_status:null},
+      {sku:'LP-FLXSTRED-BLK',asin:'B0FPDD8F64',brand:'Lifepro',category:'Bikes',pdp_status:'Suppressed-Pricing Issue',sku_status:'NewLaunch',priority:'P1',pm:'Ahmad Naseem',ads_rep:'Jose Johan Estevez',fba_stock:0,wh_stock:382,total_stock:382,ads_signal:'REVIEW',action:'Check 1P price vs MAP in Vendor Central. Submit price correction if above MAP.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/9964031078',open_case:true,case_status:'Urgent'},
+      {sku:'LP-SNCP-BLK',asin:'B09P82X4YY',brand:'Lifepro',category:'Massage guns',pdp_status:'ADS suppressed',sku_status:'Active',priority:'P1',pm:'Faizan',ads_rep:'Hector Jose Castro Baez',fba_stock:0,wh_stock:44,total_stock:155,ads_signal:'PAUSE',action:'Compliance to identify PPC ineligibility root cause. Alert ADS Rep — budget burning.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/8574688138',open_case:false,case_status:null},
+      {sku:'LP-VBRCP-WHT',asin:'B09P8SS946',brand:'Lifepro',category:'Foot massagers',pdp_status:'Suppressed-Reason Unknown',sku_status:'Active',priority:'P1',pm:'Ahmed Mujtaba',ads_rep:'Hector Jose Castro Baez',fba_stock:0,wh_stock:689,total_stock:712,ads_signal:'PAUSE',action:'PM to investigate in SC/VC. Check listing quality dashboard. Open case if no clear reason in 24h.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/8574685736',open_case:false,case_status:null},
+      {sku:'PC-IRNPW-STL-BLK',asin:'B0DLR6B491',brand:'Petcove',category:'Cat Litter Boxes',pdp_status:'ADS suppressed',sku_status:'Active',priority:'P1',pm:'Faizan',ads_rep:'Yahve Mena',fba_stock:0,wh_stock:359,total_stock:599,ads_signal:'PAUSE',action:'Compliance to identify PPC ineligibility root cause.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/9205285848',open_case:false,case_status:null},
+      {sku:'PC-IRNPW-STL-GRY',asin:'B0DLYDTMP5',brand:'Petcove',category:'Cat Litter Boxes',pdp_status:'ADS suppressed',sku_status:'Active',priority:'P1',pm:'Faizan',ads_rep:'Yahve Mena',fba_stock:0,wh_stock:484,total_stock:644,ads_signal:'PAUSE',action:'Compliance to identify PPC ineligibility root cause.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/9205047087',open_case:false,case_status:null},
+      {sku:'LP-VIBPSTR',asin:'B0B8G4MPNG',brand:'Lifepro',category:'Vibration',pdp_status:'DF Disabled',sku_status:'Active',priority:'P2',pm:'Riyan AJ',ads_rep:'Yahve Mena',fba_stock:1,wh_stock:574,total_stock:575,ads_signal:'REVIEW',action:'Check if DF was intentionally disabled. If not: re-enable in Vendor Central → Fulfillment settings.',monday_url:'https://life-pro.monday.com/boards/8574487078/pulses/8574688178',open_case:false,case_status:null},
+    ],
+    ads_pause: ['LP-FLXSTPLS-BLU','LP-AGLDRD-BLK','LP-HXPLTL-PRPL','LP-SNCLX-BLK','LP-SNCLX-BLU','LP-PWRFLWPLS2-BLK','LP-SNCP-BLK','LP-VBRCP-WHT','PC-IRNPW-STL-BLK','PC-IRNPW-STL-GRY'],
+    ads_review: ['LP-FLXSTRED-BLK','LP-VIBPSTR'],
+    ads_resume: []
+  };
+}
+
+function stockClass(fba, total) {
+  if(fba === 0 && total === 0) return 'stock-zero';
+  if(fba === 0) return 'stock-low';
+  return 'stock-ok';
+}
+
+function renderDigest(data) {
+  const main = document.getElementById('main');
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  const p0 = data.issues.filter(i=>i.priority==='P0');
+  const p1 = data.issues.filter(i=>i.priority==='P1');
+  const p2 = data.issues.filter(i=>i.priority==='P2');
+
+  function issueCard(issue) {
+    const bc = BRAND_COLORS[issue.brand] || {bg:'rgba(100,100,100,0.15)',color:'#aaa'};
+    return `<div class="issue-card ${issue.priority.toLowerCase()}">
+      <div class="issue-top">
+        <div>
+          <span class="sku-name">${issue.sku}</span>
+          <span class="asin">${issue.asin}</span>
+        </div>
+        <span class="brand-badge" style="background:${bc.bg};color:${bc.color}">${issue.brand}</span>
+        ${issue.sku_status === 'Top 10' ? '<span class="brand-badge" style="background:rgba(78,204,198,0.15);color:#4eccc6">TOP 10</span>' : ''}
+        ${issue.open_case ? `<span class="brand-badge" style="background:rgba(26,95,160,0.15);color:#5b9bd5">CASE: ${issue.case_status||'Open'}</span>` : ''}
+      </div>
+      <div class="issue-type ${issue.priority.toLowerCase()}">${issue.pdp_status}</div>
+      <div class="issue-meta">
+        <span class="meta-pill">PM: ${issue.pm}</span>
+        <span class="meta-pill">ADS: ${issue.ads_rep}</span>
+        <span class="meta-pill">Cat: ${issue.category}</span>
+        <span class="meta-pill ${stockClass(issue.fba_stock, issue.total_stock)}">FBA: ${issue.fba_stock??0}</span>
+        <span class="meta-pill ${issue.wh_stock > 0 ? 'stock-ok' : 'stock-zero'}">WH: ${issue.wh_stock??0}</span>
+        <span class="meta-pill">Total: ${issue.total_stock??0}</span>
+        ${issue.ads_signal ? `<span class="meta-pill ${issue.ads_signal==='PAUSE'?'stock-zero':issue.ads_signal==='REVIEW'?'stock-low':'stock-ok'}">ADS: ${issue.ads_signal}</span>` : ''}
+      </div>
+      <div class="action-box"><strong>Action:</strong> ${issue.action}</div>
+      <div class="issue-links">
+        <a class="issue-link" href="${issue.monday_url}" target="_blank">Monday item →</a>
+        ${issue.asin ? `<a class="issue-link" href="https://www.amazon.com/dp/${issue.asin}" target="_blank">Amazon listing →</a>` : ''}
+      </div>
+    </div>`;
+  }
+
+  main.innerHTML = `
+    <div class="run-time">${dateStr} · ${now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div>
+    <div class="summary-bar">
+      <div class="sum-card"><div class="sum-label">Checked</div><div class="sum-val" style="color:var(--text)">${data.total_active||276}</div></div>
+      <div class="sum-card p0"><div class="sum-label">P0 Critical</div><div class="sum-val">${p0.length}</div></div>
+      <div class="sum-card p1"><div class="sum-label">P1 High</div><div class="sum-val">${p1.length}</div></div>
+      <div class="sum-card p2"><div class="sum-label">P2 Medium</div><div class="sum-val">${p2.length}</div></div>
+      <div class="sum-card ok"><div class="sum-label">Healthy</div><div class="sum-val">${data.healthy_count||213}</div></div>
+    </div>
+
+    ${p0.length > 0 ? `
+    <div class="section">
+      <div class="section-header sec-p0">P0 — Critical · Act now<span class="sec-count">${p0.length} SKU${p0.length!==1?'s':''}</span></div>
+      ${p0.map(issueCard).join('')}
+    </div>` : ''}
+
+    ${p1.length > 0 ? `
+    <div class="section">
+      <div class="section-header sec-p1">P1 — High · Action today<span class="sec-count">${p1.length} SKU${p1.length!==1?'s':''}</span></div>
+      ${p1.map(issueCard).join('')}
+    </div>` : ''}
+
+    ${p2.length > 0 ? `
+    <div class="section">
+      <div class="section-header sec-p2">P2 — Medium · This week<span class="sec-count">${p2.length} SKU${p2.length!==1?'s':''}</span></div>
+      ${p2.map(issueCard).join('')}
+    </div>` : ''}
+
+    <div class="section">
+      <div class="section-header sec-ads">Ads team signals<span class="sec-count">${(data.ads_pause?.length||0)+(data.ads_review?.length||0)} actions</span></div>
+      <div class="ads-grid">
+        <div>
+          <div class="ads-col-head">Pause immediately (${data.ads_pause?.length||0})</div>
+          ${(data.ads_pause||[]).map(sku => {
+            const issue = data.issues.find(i=>i.sku===sku);
+            return `<div class="ads-item pause"><div class="ads-sku">${sku}</div><div class="ads-reason">${issue?.pdp_status||'Issue detected'}</div></div>`;
+          }).join('') || '<div style="font-size:11px;color:var(--muted);padding:8px">None</div>'}
+        </div>
+        <div>
+          <div class="ads-col-head">Review bids (${data.ads_review?.length||0})</div>
+          ${(data.ads_review||[]).map(sku => {
+            const issue = data.issues.find(i=>i.sku===sku);
+            return `<div class="ads-item review"><div class="ads-sku">${sku}</div><div class="ads-reason">${issue?.pdp_status||'Performance issue'}</div></div>`;
+          }).join('') || '<div style="font-size:11px;color:var(--muted);padding:8px">None</div>'}
+          ${(data.ads_resume||[]).length > 0 ? `
+          <div class="ads-col-head" style="margin-top:10px">Resume when cleared (${data.ads_resume.length})</div>
+          ${data.ads_resume.map(sku=>`<div class="ads-item resume"><div class="ads-sku">${sku}</div></div>`).join('')}` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
