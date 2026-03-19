@@ -19,13 +19,12 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install -r scraper/requirements.txt
+        run: pip install -r scraper/requirements.txt
 
-      - name: Install Playwright browsers
+      - name: Install Playwright + system deps
         run: |
           python -m playwright install chromium
-          python -m playwright install-deps chromium
+          sudo python -m playwright install-deps chromium
 
       - name: Run delivery scraper
         env:
