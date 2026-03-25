@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataDive Intelligence — Lifepro</title>
+<style>
+  :root {
+    --bg: #f8fafc; --card: #fff; --border: #e2e8f0; --text: #0f172a;
+    --muted: #64748b; --accent: #1e40af; --accent-light: #eff6ff;
+    --green: #16a34a; --amber: #d97706; --red: #dc2626;
+    --green-bg: #f0fdf4; --amber-bg: #fffbeb; --red-bg: #fef2f2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+  header { background: var(--accent); color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: 16px; font-weight: 600; }
+  header .sub { font-size: 12px; opacity: .7; margin-left: auto; }
+  .layout { display: flex; height: calc(100vh - 49px); }
+  .sidebar { width: 240px; flex-shrink: 0; background: var(--card); border-right: 1px solid var(--border); overflow-y: auto; padding: 12px 0; }
+  .sidebar-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; padding: 8px 16px 4px; }
+  .cat-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; cursor: pointer; transition: background .1s; border-left: 3px solid transparent; }
+  .cat-item:hover { background: var(--accent-light); }
+  .cat-item.active { background: var(--accent-light); border-left-color: var(--accent); color: var(--accent); font-weight: 500; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 18px; font-weight: 600; }
+  .niche-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .niche-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all .15s; }
+  .niche-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(30,64,175,.1); }
+  .niche-card.selected { border-color: var(--accent); background: var(--accent-light); }
+  .niche-keyword { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+  .niche-meta { font-size: 11px; color: var(--muted); }
+  .detail-panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+  .detail-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .detail-title { font-weight: 600; font-size: 14px; }
+  .detail-body { padding: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: var(--bg); padding: 6px 10px; text-align: left; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+  td { padding: 7px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 500; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .vol-bar { height: 4px; border-radius: 2px; background: #e2e8f0; display: inline-block; margin-left: 6px; vertical-align: middle; }
+  .vol-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text); transition: all .1s; }
+  .btn:hover { background: var(--bg); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: #1d3a9e; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .tab { padding: 8px 16px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); transition: all .1s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .stat-val { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 40px; color: var(--muted); }
+  .search-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .search-input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; outline: none; }
+  .search-input:focus { border-color: var(--accent); }
+  .kw-relevancy { display: flex; gap: 2px; }
+  .kw-dot { width: 6px; height: 6px; border-radius: 1px; background: #e2e8f0; }
+  .kw-dot.filled { background: var(--accent); }
+  .asin-link { color: var(--accent); text-decoration: none; font-family: monospace; font-size: 11px; }
+  .asin-link:hover { text-decoration: underline; }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 9999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filter-chip { padding: 4px 10px; border-radius: 20px; font-size: 11px; border: 1px solid var(--border); cursor: pointer; transition: all .1s; background: var(--card); }
+  .filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>🔍</div>
+  <h1>DataDive Category Intelligence</h1>
+  <span class="sub">Lifepro Amazon USA · <span id="total-niches">–</span> niches in account</span>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-label">Categories</div>
+    <div id="cat-list"></div>
+  </div>
+  <div class="main" id="main-content">
+    <div class="empty">Select a category to explore DataDive niches</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_KEY = 'eu6bEMbBhF6N600rjpIJ03RItjRoQxPS84TZ257G';
+const BASE = 'https://api.datadive.tools/v1';
+
+const CATEGORIES = [
+  { id: 'vibration', label: 'Vibration Plates', color: '#7c3aed', keywords: ['vibration plate', 'vibration platform', 'rumblex', 'waver'] },
+  { id: 'massage', label: 'Massage Products', color: '#0891b2', keywords: ['massage gun', 'foot massager', 'hand massager', 'percussion massager', 'shiatsu'] },
+  { id: 'redlight', label: 'Red Light Therapy', color: '#dc2626', keywords: ['red light therapy', 'infrared light', 'led face mask', 'infrared sauna'] },
+  { id: 'sauna', label: 'Sauna', color: '#ea580c', keywords: ['sauna', 'infrared sauna blanket', 'sauna dome', 'portable sauna'] },
+  { id: 'dumbbells', label: 'Dumbbells', color: '#059669', keywords: ['adjustable dumbbell', 'dumbbell set', 'hex dumbbell', 'kettlebell'] },
+  { id: 'cardio', label: 'Treadmill & Bikes', color: '#7c3aed', keywords: ['treadmill', 'walking pad', 'folding treadmill', 'under desk treadmill'] },
+  { id: 'litter', label: 'Litter Boxes (Petcove)', color: '#b45309', keywords: ['self cleaning litter box', 'automatic litter box', 'litter robot', 'cat litter box'] },
+  { id: 'trampoline', label: 'Trampolines (Joyberri)', color: '#0284c7', keywords: ['trampoline', 'rebounder', 'mini trampoline', 'fitness trampoline'] },
+];
+
+let allNiches = [];
+let selectedCat = null;
+let selectedNiche = null;
+let nicheDetails = {};
+let activeTab = 'keywords';
+
+async function api(path) {
+  const r = await fetch(`${BASE}${path}`, { headers: { 'x-api-key': API_KEY } });
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function fmtNum(n) {
+  if (!n && n !== 0) return '–';
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(0) + 'K';
+  return n.toLocaleString();
+}
+
+// Load all niches
+async function loadNiches() {
+  try {
+    const result = await api('/niches?pageSize=100&page=1');
+    document.getElementById('total-niches').textContent = fmtNum(result.total) + ' niches';
+    // Load more pages in background to get all relevant ones
+    let data = [...(result.data || [])];
+    const totalPages = result.lastPage || 1;
+    const pagesToLoad = Math.min(totalPages, 183); // Load up to 18,300 niches
+    for (let p = 2; p <= pagesToLoad; p += 10) {
+      const promises = [];
+      for (let pp = p; pp < p + 10 && pp <= pagesToLoad; pp++) {
+        promises.push(api(`/niches?pageSize=100&page=${pp}`).then(r => r.data || []));
+      }
+      const batches = await Promise.allSettled(promises);
+      for (const b of batches) {
+        if (b.status === 'fulfilled') data = data.concat(b.value);
+      }
+    }
+    allNiches = data;
+    document.getElementById('total-niches').textContent = fmtNum(allNiches.length) + ' niches loaded';
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function buildSidebar() {
+  const list = document.getElementById('cat-list');
+  CATEGORIES.forEach(cat => {
+    const el = document.createElement('div');
+    el.className = 'cat-item';
+    el.innerHTML = `<div class="cat-dot" style="background:${cat.color}"></div><span>${cat.label}</span>`;
+    el.onclick = () => selectCategory(cat);
+    el.dataset.id = cat.id;
+    list.appendChild(el);
+  });
+}
+
+function selectCategory(cat) {
+  document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`[data-id="${cat.id}"]`).classList.add('active');
+  selectedCat = cat;
+  selectedNiche = null;
+  renderCategoryView(cat);
+}
+
+function getRelevantNiches(cat) {
+  return allNiches.filter(n => {
+    const kw = (n.heroKeyword || '').toLowerCase();
+    return cat.keywords.some(k => kw.includes(k.toLowerCase()));
+  }).slice(0, 60);
+}
+
+function renderCategoryView(cat) {
+  const niches = getRelevantNiches(cat);
+  const main = document.getElementById('main-content');
+  main.innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="section-title">${cat.label}</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:2px">${niches.length} niches found</div>
+      </div>
+    </div>
+    <div class="search-row">
+      <input class="search-input" id="niche-search" placeholder="Filter niches..." oninput="filterNiches()">
+    </div>
+    <div class="niche-grid" id="niche-grid">
+      ${niches.length ? niches.map(n => `
+        <div class="niche-card" onclick="selectNiche('${n.nicheId}', '${n.heroKeyword.replace(/'/g,"\\'")}', this)" data-niche="${n.nicheId}">
+          <div class="niche-keyword">${n.heroKeyword}</div>
+          <div class="niche-meta">${n.marketplace === 'com' ? '🇺🇸 US' : n.marketplace} · Updated ${new Date(n.latestResearchDate).toLocaleDateString()}</div>
+        </div>
+      `).join('') : '<div class="empty">No matching niches found</div>'}
+    </div>
+    <div id="niche-detail"></div>
+  `;
+}
+
+function filterNiches() {
+  const q = document.getElementById('niche-search')?.value.toLowerCase() || '';
+  document.querySelectorAll('.niche-card').forEach(card => {
+    const matches = card.querySelector('.niche-keyword').textContent.toLowerCase().includes(q);
+    card.style.display = matches ? '' : 'none';
+  });
+}
+
+async function selectNiche(nicheId, keyword, el) {
+  document.querySelectorAll('.niche-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedNiche = nicheId;
+
+  const detail = document.getElementById('niche-detail');
+  detail.innerHTML = `<div class="detail-panel"><div class="detail-body"><div class="spinner"></div> Loading ${keyword}...</div></div>`;
+
+  try {
+    let data = nicheDetails[nicheId];
+    if (!data) {
+      const [kw, comp] = await Promise.all([
+        api(`/niches/${nicheId}/keywords`).catch(() => null),
+        api(`/niches/${nicheId}/competitors`).catch(() => null),
+      ]);
+      data = { keywords: kw?.data, competitors: comp?.data };
+      nicheDetails[nicheId] = data;
+    }
+    renderNicheDetail(nicheId, keyword, data);
+  } catch(e) {
+    detail.innerHTML = `<div class="detail-panel"><div class="detail-body" style="color:var(--red)">Error loading data: ${e.message}</div></div>`;
+  }
+}
+
+function renderNicheDetail(nicheId, keyword, data) {
+  const kws = data?.keywords?.keywords || [];
+  const stats = data?.competitors?.statistics || {};
+  const comps = data?.competitors?.competitors || [];
+  const maxVol = kws.length ? Math.max(...kws.map(k => k.searchVolume || 0)) : 1;
+
+  const detail = document.getElementById('niche-detail');
+  detail.innerHTML = `
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div class="detail-title">${keyword}</div>
+        <a href="https://app.datadive.tools/niches/${nicheId}" target="_blank" class="btn" style="font-size:11px;padding:5px 10px">Open in DataDive ↗</a>
+      </div>
+      <div class="detail-body">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-val">${fmtNum(stats.numKeywords || kws.length)}</div><div class="stat-label">Total keywords</div></div>
+          <div class="stat-card"><div class="stat-val">${fmtNum(stats.totalSvOfKeywords)}</div><div class="stat-label">Total search volume</div></div>
+          <div class="stat-card"><div class="stat-val">${comps.length}</div><div class="stat-label">Competitors tracked</div></div>
+          <div class="stat-card"><div class="stat-val">${fmtNum(stats.numVisibleKeywords)}</div><div class="stat-label">Visible keywords</div></div>
+        </div>
+        <div class="tabs">
+          <div class="tab ${activeTab==='keywords'?'active':''}" onclick="switchTab('keywords','${nicheId}','${keyword.replace(/'/g,"\\'")}')">Keywords (${kws.length})</div>
+          <div class="tab ${activeTab==='competitors'?'active':''}" onclick="switchTab('competitors','${nicheId}','${keyword.replace(/'/g,"\\'")}')">Competitors (${comps.length})</div>
+        </div>
+        <div id="tab-content">
+          ${activeTab === 'keywords' ? renderKeywords(kws, maxVol) : renderCompetitors(comps, stats)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function switchTab(tab, nicheId, keyword) {
+  activeTab = tab;
+  renderNicheDetail(nicheId, keyword, nicheDetails[nicheId]);
+}
+
+function renderKeywords(kws, maxVol) {
+  if (!kws.length) return '<div class="empty">No keyword data available</div>';
+  const sorted = [...kws].sort((a,b) => (b.searchVolume||0) - (a.searchVolume||0));
+  return `
+    <table>
+      <thead><tr><th>Keyword</th><th>Search Volume</th><th>Relevancy</th><th>Competitors ranking</th></tr></thead>
+      <tbody>${sorted.slice(0,50).map(k => {
+        const pct = Math.round(((k.searchVolume||0) / maxVol) * 60);
+        const ranks = Object.keys(k.asinRanks || {}).length;
+        const rel = Math.round((k.relevancy || 0) * 5);
+        return `<tr>
+          <td>${k.keyword}</td>
+          <td>${fmtNum(k.searchVolume)} <span class="vol-bar" style="width:60px"><span class="vol-fill" style="width:${pct}px"></span></span></td>
+          <td><div class="kw-relevancy">${[1,2,3,4,5].map(i=>`<div class="kw-dot${i<=rel?' filled':''}"></div>`).join('')}</div></td>
+          <td>${ranks > 0 ? `<span class="badge badge-blue">${ranks} ASINs</span>` : '–'}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+    ${sorted.length > 50 ? `<div style="text-align:center;margin-top:8px;font-size:11px;color:var(--muted)">${sorted.length - 50} more keywords in DataDive</div>` : ''}
+  `;
+}
+
+function renderCompetitors(comps, stats) {
+  if (!comps.length) return '<div class="empty">No competitor data available</div>';
+  return `
+    <table>
+      <thead><tr><th>ASIN</th><th>Sales Est.</th><th>Revenue Est.</th><th>Avg Price</th><th>Ranking Juice</th></tr></thead>
+      <tbody>${comps.slice(0,30).map(c => `
+        <tr>
+          <td><a href="https://www.amazon.com/dp/${c.asin}" target="_blank" class="asin-link">${c.asin}</a></td>
+          <td>${fmtNum(c.unitsSold)}</td>
+          <td>${c.revenue ? '$' + fmtNum(c.revenue) : '–'}</td>
+          <td>${c.avgPrice ? '$' + c.avgPrice.toFixed(2) : '–'}</td>
+          <td>${c.rankingJuice ? `<span class="badge ${c.rankingJuice > 70 ? 'badge-green' : c.rankingJuice > 40 ? 'badge-amber' : 'badge-red'}">${c.rankingJuice}</span>` : '–'}</td>
+        </tr>
+      `).join('')}</tbody>
+    </table>
+  `;
+}
+
+// Init
+buildSidebar();
+loadNiches();
+</script>
+</body>
+</html>
