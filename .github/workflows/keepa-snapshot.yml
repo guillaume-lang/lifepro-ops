@@ -1,0 +1,31 @@
+name: Keepa Snapshot
+
+on:
+  schedule:
+    # Daily at 7am EST (12pm UTC) — after delivery scraper
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install httpx supabase
+
+      - name: Run Keepa snapshot
+        env:
+          KEEPA_API_KEY: ${{ secrets.KEEPA_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: python scraper/keepa_scraper.py
