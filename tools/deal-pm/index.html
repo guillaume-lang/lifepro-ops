@@ -78,6 +78,8 @@
     color: var(--muted);
     letter-spacing: 0.04em;
   }
+  .reset-btn { padding:3px 8px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:color 0.15s; }
+  .reset-btn:hover { color:var(--text); }
   .header-date {
     margin-left: auto;
     font-family: var(--mono);
@@ -396,6 +398,7 @@
     <div class="header-divider"></div>
     <span class="header-sub">Lifepro · Amazon USA</span>
     <span class="header-date" id="live-date"></span>
+    <button class="reset-btn" onclick="resetKeys()" title="Clear saved API keys">⚙</button>
   </header>
 
   <!-- SIDEBAR -->
@@ -556,6 +559,16 @@ RESPONSE STYLE:
 let messages = [];
 let isLoading = false;
 
+function getKey(storageKey, label) {
+  let v = localStorage.getItem(storageKey);
+  if (!v) { v = prompt(label); if (v) localStorage.setItem(storageKey, v.trim()); }
+  return v ? v.trim() : null;
+}
+function resetKeys() {
+  localStorage.removeItem('lp_anthropic_key');
+  alert('API key cleared. You will be prompted again on next message.');
+}
+
 function getDate() {
   return new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
 }
@@ -656,6 +669,8 @@ async function sendMessage() {
   const input = document.getElementById('user-input');
   const text = input.value.trim();
   if (!text) return;
+  const ANTHROPIC_KEY = getKey('lp_anthropic_key', 'Enter your Anthropic API key (starts with sk-ant-)');
+  if (!ANTHROPIC_KEY) return;
 
   input.value = '';
   input.style.height = 'auto';
@@ -669,10 +684,10 @@ async function sendMessage() {
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        max_tokens: 2000,
         system: SYSTEM_PROMPT,
         messages: messages
       })

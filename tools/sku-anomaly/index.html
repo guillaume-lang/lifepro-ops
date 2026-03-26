@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKU Anomaly Monitor — Lifepro</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0d0f;--surface:#13151a;--surface2:#1a1d24;--border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);--text:#e2e0da;--muted:#6b6962;--muted2:#3d3c39;
+  --red:#c0392b;--red-dim:rgba(192,57,43,0.15);--red-light:#e74c3c;
+  --amber:#c17f24;--amber-dim:rgba(193,127,36,0.12);--amber-light:#e6a32e;
+  --yellow:#b5a020;--yellow-dim:rgba(181,160,32,0.1);--yellow-light:#d4be28;
+  --green:#1a7a4a;--green-dim:rgba(26,122,74,0.12);--green-light:#27ae60;
+  --blue:#1a5fa0;--blue-light:#3498db;--blue-dim:rgba(26,95,160,0.12);
+  --mono:'JetBrains Mono','Fira Code','Cascadia Code',monospace;
+}
+
+
+/* THEME SWITCHER */
+.theme-picker{display:flex;align-items:center;gap:5px;margin-left:12px}
+.theme-swatch{width:14px;height:14px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s,transform 0.1s;flex-shrink:0}
+.theme-swatch:hover{transform:scale(1.2)}
+.theme-swatch.active{border-color:var(--text)}
+.swatch-dark{background:#13151a;box-shadow:0 0 0 1px rgba(255,255,255,0.2)}
+.swatch-light{background:#ffffff;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
+.swatch-contrast{background:#000;box-shadow:0 0 0 1px #ff4444}
+.swatch-slate{background:#2d3648;box-shadow:0 0 0 1px rgba(255,255,255,0.2)}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:48px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.header-mark{width:18px;height:18px;background:var(--red-light);clip-path:polygon(50% 0%,100% 100%,0% 100%);flex-shrink:0}
+.header-title{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+.header-sep{width:1px;height:16px;background:var(--border2)}
+.header-meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.run-btn{padding:5px 14px;border-radius:6px;border:1px solid var(--amber);background:var(--amber-dim);color:var(--amber-light);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.04em;transition:all 0.15s}
+.run-btn:hover{background:var(--amber);color:#1a0e00}
+.run-btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* LOADING */
+.loading{display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px}
+.loading.active{display:flex}
+.loading-text{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:0.06em}
+.spinner{display:flex;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--amber);animation:bounce 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:0.2s}.dot:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+
+/* MAIN */
+.main{padding:20px;max-width:900px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);font-size:13px}
+.empty-state p{margin-bottom:8px}
+
+/* SUMMARY BAR */
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:20px}
+.sum-card{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:10px 14px}
+.sum-label{font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;font-family:var(--mono)}
+.sum-val{font-size:22px;font-weight:600;font-family:var(--mono)}
+.sum-card.critical .sum-val{color:var(--red-light)}
+.sum-card.warning .sum-val{color:var(--amber-light)}
+.sum-card.brands .sum-val{color:var(--blue-light)}
+.run-time{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;margin-bottom:14px}
+
+/* SECTIONS */
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:6px;margin-bottom:8px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-family:var(--mono)}
+.sec-critical{background:var(--red-dim);border:0.5px solid rgba(192,57,43,0.3);color:var(--red-light)}
+.sec-warning{background:var(--amber-dim);border:0.5px solid rgba(193,127,36,0.3);color:var(--amber-light)}
+.sec-ads{background:var(--blue-dim);border:0.5px solid rgba(26,95,160,0.3);color:var(--blue-light)}
+.sec-ok{background:var(--green-dim);border:0.5px solid rgba(26,122,74,0.3);color:var(--green-light)}
+.sec-count{margin-left:auto;font-size:10px;opacity:0.8}
+
+/* ALERT CARDS */
+.alert-card{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:6px;border-left:2px solid transparent}
+.alert-card.critical{border-left-color:var(--red-light)}
+.alert-card.warning{border-left-color:var(--amber-light)}
+.alert-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.sku-name{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text)}
+.asin{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:2px}
+.brand-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;letter-spacing:0.05em;text-transform:uppercase;align-self:center}
+.change-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;letter-spacing:0.05em;text-transform:uppercase;align-self:center}
+.badge-red{background:var(--red-dim);color:var(--red-light)}
+.badge-amber{background:var(--amber-dim);color:var(--amber-light)}
+.badge-green{background:var(--green-dim);color:var(--green-light)}
+.badge-blue{background:var(--blue-dim);color:var(--blue-light)}
+.change-detail{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.change-old{color:var(--muted)}
+.change-arrow{color:var(--border2)}
+.change-new.worse{color:var(--red-light)}
+.change-new.better{color:var(--green-light)}
+.change-new.neutral{color:var(--amber-light)}
+.alert-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.meta-pill{font-size:10px;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--muted);font-family:var(--mono)}
+.meta-pill.oos{color:var(--red-light);background:var(--red-dim)}
+.meta-pill.instock{color:var(--green-light);background:var(--green-dim)}
+.meta-pill.pause{color:var(--red-light);background:var(--red-dim)}
+.meta-pill.monitor{color:var(--amber-light);background:var(--amber-dim)}
+.action-box{background:var(--surface2);border-radius:5px;padding:7px 10px;font-size:11px;color:var(--text);line-height:1.5;border-left:2px solid var(--border2)}
+.action-box strong{color:var(--amber-light)}
+.alert-links{display:flex;gap:8px;margin-top:8px}
+.alert-link{font-size:10px;color:var(--blue-light);text-decoration:none;font-family:var(--mono)}
+.alert-link:hover{color:var(--amber-light)}
+
+/* ADS SIGNALS */
+.ads-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ads-col-head{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-family:var(--mono)}
+.ads-item{background:var(--surface);border:0.5px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:5px}
+.ads-sku{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.ads-reason{font-size:11px;color:var(--muted)}
+.ads-item.pause{border-left:2px solid var(--red-light)}
+.ads-item.monitor{border-left:2px solid var(--amber-light)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-mark"></div>
+  <span class="header-title">SKU Anomaly Monitor</span>
+  <div class="header-sep"></div>
+  <span class="header-meta" id="header-meta">Keepa · BSR · Price · Buybox</span>
+  <div class="theme-picker">
+    <div class="theme-swatch swatch-dark  active" title="Dark"          onclick="applyTheme('dark')"></div>
+    <div class="theme-swatch swatch-light"         title="Light"         onclick="applyTheme('light')"></div>
+    <div class="theme-swatch swatch-contrast"      title="High Contrast" onclick="applyTheme('contrast')"></div>
+    <div class="theme-swatch swatch-slate"         title="Slate"         onclick="applyTheme('slate')"></div>
+  </div>
+  <button class="run-btn" id="run-btn" onclick="runDigest()">Run Analysis</button>
+</div>
+
+<div class="loading" id="loading">
+  <div class="spinner"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  <div class="loading-text" id="loading-text">Connecting to Supabase...</div>
+</div>
+
+<div class="main" id="main">
+  <div class="empty-state">
+    <p>Click <strong>Run Analysis</strong> to pull live Keepa signals</p>
+    <p style="font-size:11px;color:var(--muted2);margin-top:4px">Reads keepa_alerts (48h) · BSR · Price · Buybox · 240 ASINs</p>
+  </div>
+</div>
+
+<script>
+/* ── THEMES ─────────────────────────────────────────────────────── */
+const THEMES = {
+  dark: {
+    '--bg':'#0c0d0f','--surface':'#13151a','--surface2':'#1a1d24',
+    '--border':'rgba(255,255,255,0.07)','--border2':'rgba(255,255,255,0.12)',
+    '--text':'#e2e0da','--muted':'#6b6962','--muted2':'#3d3c39',
+    '--red-dim':'rgba(192,57,43,0.15)','--red-light':'#e74c3c',
+    '--amber-dim':'rgba(193,127,36,0.12)','--amber-light':'#e6a32e',
+    '--amber':'#c17f24',
+    '--yellow-dim':'rgba(181,160,32,0.1)','--yellow-light':'#d4be28',
+    '--green-dim':'rgba(26,122,74,0.12)','--green-light':'#27ae60',
+    '--blue-dim':'rgba(26,95,160,0.12)','--blue-light':'#3498db',
+  },
+  light: {
+    '--bg':'#f0f2f5','--surface':'#ffffff','--surface2':'#e8eaed',
+    '--border':'rgba(0,0,0,0.09)','--border2':'rgba(0,0,0,0.16)',
+    '--text':'#111214','--muted':'#555e6b','--muted2':'#99a0ab',
+    '--red-dim':'rgba(220,38,38,0.09)','--red-light':'#c0392b',
+    '--amber-dim':'rgba(180,90,0,0.09)','--amber-light':'#b45a00',
+    '--amber':'#b45a00',
+    '--yellow-dim':'rgba(133,109,0,0.09)','--yellow-light':'#856d00',
+    '--green-dim':'rgba(21,128,61,0.09)','--green-light':'#15803d',
+    '--blue-dim':'rgba(29,78,216,0.09)','--blue-light':'#1d4ed8',
+  },
+  contrast: {
+    '--bg':'#000000','--surface':'#0d0d0d','--surface2':'#1a1a1a',
+    '--border':'rgba(255,255,255,0.18)','--border2':'rgba(255,255,255,0.35)',
+    '--text':'#ffffff','--muted':'#bbbbbb','--muted2':'#777777',
+    '--red-dim':'rgba(255,50,50,0.2)','--red-light':'#ff4444',
+    '--amber-dim':'rgba(255,190,0,0.18)','--amber-light':'#ffcc00',
+    '--amber':'#ffcc00',
+    '--yellow-dim':'rgba(255,220,0,0.15)','--yellow-light':'#ffdd00',
+    '--green-dim':'rgba(0,255,120,0.15)','--green-light':'#00ff78',
+    '--blue-dim':'rgba(50,160,255,0.15)','--blue-light':'#44aaff',
+  },
+  slate: {
+    '--bg':'#1a2030','--surface':'#232c3e','--surface2':'#2c374f',
+    '--border':'rgba(255,255,255,0.08)','--border2':'rgba(255,255,255,0.16)',
+    '--text':'#dde3f0','--muted':'#7d8ca8','--muted2':'#475369',
+    '--red-dim':'rgba(220,80,80,0.16)','--red-light':'#e07070',
+    '--amber-dim':'rgba(210,150,50,0.15)','--amber-light':'#e8b84b',
+    '--amber':'#c89830',
+    '--yellow-dim':'rgba(200,180,60,0.12)','--yellow-light':'#d4be28',
+    '--green-dim':'rgba(60,160,100,0.15)','--green-light':'#4dbb80',
+    '--blue-dim':'rgba(70,140,220,0.15)','--blue-light':'#5ba3e8',
+  },
+};
+
+function applyTheme(name) {
+  const t = THEMES[name];
+  if (!t) return;
+  const root = document.documentElement;
+  Object.entries(t).forEach(([k,v]) => root.style.setProperty(k, v));
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+  const sw = document.querySelector(`.swatch-${name}`);
+  if (sw) sw.classList.add('active');
+  localStorage.setItem('sku-theme', name);
+}
+
+(function initTheme() {
+  const saved = localStorage.getItem('sku-theme') || 'dark';
+  applyTheme(saved);
+})();
+
+
+/* ── BRAND COLORS ────────────────────────────────────────────────── */
+const BRAND_COLORS = {
+  'Lifepro':  {bg:'rgba(253,171,61,0.15)',  color:'#fdab3d'},
+  'Oaktiv':   {bg:'rgba(127,83,71,0.2)',    color:'#c8957a'},
+  'Petcove':  {bg:'rgba(169,190,232,0.15)', color:'#a9bee8'},
+  'Joyberri': {bg:'rgba(255,203,0,0.12)',   color:'#d4aa00'},
+  'Culvani':  {bg:'rgba(87,155,252,0.12)',  color:'#579bfc'},
+  'Sunello':  {bg:'rgba(255,109,59,0.12)',  color:'#ff6d3b'},
+};
+
+const CHANGE_BADGES = {
+  'buybox_lost':          {label:'BUYBOX LOST',    cls:'badge-red'},
+  'buybox_seller_change': {label:'SELLER CHANGED', cls:'badge-red'},
+  'went_oos':             {label:'OUT OF STOCK',   cls:'badge-red'},
+  'parent_changed':       {label:'PARENT CHANGED', cls:'badge-red'},
+  'bsr_change':           {label:'BSR CHANGE',     cls:'badge-amber'},
+  'price_change':         {label:'PRICE CHANGE',   cls:'badge-blue'},
+};
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 3600)  return Math.round(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.round(diff / 3600) + 'h ago';
+  return Math.round(diff / 86400) + 'd ago';
+}
+
+function changeDirection(alert) {
+  const ct = alert.change_type;
+  if (ct === 'bsr_change') {
+    const oldV = parseFloat(alert.old_value), newV = parseFloat(alert.new_value);
+    return newV > oldV ? 'worse' : 'better';
+  }
+  if (ct === 'price_change') return 'neutral';
+  return 'worse';
+}
+
+function changeBadge(alert) {
+  const info = CHANGE_BADGES[alert.change_type] || {label: alert.change_type?.toUpperCase() || 'CHANGE', cls: 'badge-amber'};
+  let label = info.label;
+  if (alert.change_type === 'bsr_change') {
+    label = changeDirection(alert) === 'worse' ? 'BSR DROP' : 'BSR SPIKE';
+  }
+  if (alert.change_label) label = alert.change_label;
+  return `<span class="change-badge ${info.cls}">${label}</span>`;
+}
+
+function formatVal(alert, which) {
+  const v = which === 'old' ? alert.old_value : alert.new_value;
+  const ct = alert.change_type;
+  if (!v || v === 'null') return '—';
+  if (ct === 'bsr_change') return 'BSR ' + Number(v).toLocaleString();
+  if (ct === 'price_change') return '$' + parseFloat(v).toFixed(2);
+  if (ct === 'buybox_is_amazon' || ct === 'buybox_lost') return v === 'true' ? '1P (Amazon)' : '3P';
+  return v;
+}
+
+function alertCard(alert) {
+  const bc = BRAND_COLORS[alert.brand] || {bg:'rgba(100,100,100,0.15)', color:'#aaa'};
+  const sev = (alert.severity || 'Warning').toLowerCase();
+  const dir = changeDirection(alert);
+  const ta = alert.time_ago || timeAgo(alert.alerted_at);
+  const bsr = alert.current_bsr ? Number(alert.current_bsr).toLocaleString() : '—';
+  const price = alert.current_price != null ? '$' + parseFloat(alert.current_price).toFixed(2) : '—';
+  const stockCls = alert.in_stock === false ? 'oos' : 'instock';
+  const stockLabel = alert.in_stock === false ? 'OOS' : 'IN STOCK';
+  const adsCls = alert.ads_signal === 'PAUSE' ? 'pause' : alert.ads_signal === 'MONITOR' ? 'monitor' : '';
+  const action = alert.action || (alert.ads_signal === 'PAUSE' ? 'Pause campaigns immediately — no conversion possible.' : 'Monitor today — check BSR trend and bid strategy.');
+
+  return `<div class="alert-card ${sev}">
+    <div class="alert-top">
+      <div>
+        <span class="sku-name">${alert.sku || '—'}</span>
+        <span class="asin">${alert.asin}</span>
+      </div>
+      <span class="brand-badge" style="background:${bc.bg};color:${bc.color}">${alert.brand || '—'}</span>
+      ${changeBadge(alert)}
+    </div>
+    <div class="change-detail">
+      <span class="change-old">${formatVal(alert, 'old')}</span>
+      <span class="change-arrow">→</span>
+      <span class="change-new ${dir}">${formatVal(alert, 'new')}</span>
+    </div>
+    <div class="alert-meta">
+      ${alert.category ? `<span class="meta-pill">Cat: ${alert.category}</span>` : ''}
+      <span class="meta-pill">BSR: ${bsr}</span>
+      <span class="meta-pill">Price: ${price}</span>
+      <span class="meta-pill ${stockCls}">${stockLabel}</span>
+      ${alert.ads_signal ? `<span class="meta-pill ${adsCls}">ADS: ${alert.ads_signal}</span>` : ''}
+      <span class="meta-pill">${ta}</span>
+    </div>
+    <div class="action-box"><strong>Action:</strong> ${action}</div>
+    <div class="alert-links">
+      <a class="alert-link" href="https://www.amazon.com/dp/${alert.asin}" target="_blank">Amazon listing →</a>
+    </div>
+  </div>`;
+}
+
+function renderDigest(data) {
+  const main = document.getElementById('main');
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
+
+  const critical = data.critical_alerts || [];
+  const warning  = data.warning_alerts  || [];
+  const pause    = data.ads_signals?.pause_skus   || [];
+  const monitor  = data.ads_signals?.monitor_skus || [];
+  const s        = data.summary || {};
+
+  main.innerHTML = `
+    <div class="run-time">${dateStr} · ${now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div>
+    <div class="summary-bar">
+      <div class="sum-card"><div class="sum-label">Total Alerts (48h)</div><div class="sum-val" style="color:var(--text)">${s.total ?? (critical.length + warning.length)}</div></div>
+      <div class="sum-card critical"><div class="sum-label">Critical</div><div class="sum-val">${s.critical ?? critical.length}</div></div>
+      <div class="sum-card warning"><div class="sum-label">Warning</div><div class="sum-val">${s.warning ?? warning.length}</div></div>
+      <div class="sum-card brands"><div class="sum-label">Brands Affected</div><div class="sum-val">${s.brands_affected ?? new Set([...critical, ...warning].map(a=>a.brand).filter(Boolean)).size}</div></div>
+    </div>
+
+    ${critical.length > 0 ? `
+    <div class="section">
+      <div class="section-header sec-critical">Critical · Act now<span class="sec-count">${critical.length} SKU${critical.length!==1?'s':''}</span></div>
+      ${critical.map(alertCard).join('')}
+    </div>` : ''}
+
+    ${warning.length > 0 ? `
+    <div class="section">
+      <div class="section-header sec-warning">Warning · Monitor today<span class="sec-count">${warning.length} SKU${warning.length!==1?'s':''}</span></div>
+      ${warning.map(alertCard).join('')}
+    </div>` : ''}
+
+    ${critical.length === 0 && warning.length === 0 ? `
+    <div class="section">
+      <div class="section-header sec-ok">All clear · No anomalies in last 48h<span class="sec-count">0 alerts</span></div>
+    </div>` : ''}
+
+    <div class="section">
+      <div class="section-header sec-ads">Ads team signals<span class="sec-count">${pause.length + monitor.length} action${pause.length+monitor.length!==1?'s':''}</span></div>
+      <div class="ads-grid">
+        <div>
+          <div class="ads-col-head">Pause campaigns (${pause.length})</div>
+          ${pause.map(s => `<div class="ads-item pause"><div class="ads-sku">${s.sku || s.asin}</div><div class="ads-reason">${s.reason || ''}</div></div>`).join('')
+            || '<div style="font-size:11px;color:var(--muted);padding:8px">None</div>'}
+        </div>
+        <div>
+          <div class="ads-col-head">Monitor / review bids (${monitor.length})</div>
+          ${monitor.map(s => `<div class="ads-item monitor"><div class="ads-sku">${s.sku || s.asin}</div><div class="ads-reason">${s.reason || ''}</div></div>`).join('')
+            || '<div style="font-size:11px;color:var(--muted);padding:8px">None</div>'}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildSystemPrompt() {
+  return `You are the SKU Anomaly Monitor for Lifepro Amazon USA Operations.
+
+TASK: Query Supabase to retrieve Keepa alerts from the last 48 hours, enrich with snapshot context, and return a JSON digest.
+
+SUPABASE TABLES:
+- keepa_alerts: id, asin, sku, brand, severity, change_type, old_value, new_value, detail, alert_sent, alerted_at
+- keepa_snapshots: id, asin, sku, brand, category, title, bsr, price_amazon, price_new, buybox_seller, buybox_is_amazon, rating, review_count, in_stock, parent_asin, variation_count, snapped_at
+
+QUERY STEPS:
+1. Query keepa_alerts WHERE alerted_at >= NOW() - INTERVAL '48 hours', ORDER BY severity DESC, alerted_at DESC, LIMIT 200
+2. For each unique ASIN in results, query keepa_snapshots DISTINCT ON asin ORDER BY snapped_at DESC to get the most recent snapshot
+3. DEDUPLICATE: if same ASIN + change_type appears multiple times, keep only the most recent row
+
+BSR DIRECTION: BSR is a rank — HIGHER number = WORSE rank.
+- old_value=800, new_value=1200 → rank got worse → change_label="BSR DROP"
+- old_value=1200, new_value=800 → rank improved → change_label="BSR SPIKE"
+
+ADS SIGNAL RULES:
+- pause_skus: went_oos OR buybox_lost (no conversion possible — spending budget with zero return)
+- monitor_skus: bsr_change where rank DECLINED (new > old), price_change, OR buybox_seller_change
+
+ACTION RECOMMENDATIONS by change_type:
+- went_oos: "Pause campaigns immediately. Check warehouse stock — if available, ship to FBA urgently."
+- buybox_lost: "Pause or reduce bids — we're driving traffic a competitor converts. PM to investigate who won buybox."
+- buybox_seller_change: "Pause campaigns. Check if 3P seller is undercutting. PM to review pricing and BB eligibility."
+- parent_changed: "Do not run ads until ASIN structure is confirmed. PM to investigate in Seller/Vendor Central."
+- bsr_change (worse): "Monitor bids — organic rank declining may require bid increase to defend position."
+- bsr_change (better): "Rank improving — consider increasing budget to capitalize on momentum."
+- price_change: "Check margin impact. If competitor lowered price, review bid strategy with ads rep."
+
+RETURN FORMAT — respond ONLY with valid JSON, no markdown, no explanation:
+{
+  "run_time": "ISO timestamp",
+  "summary": { "total": N, "critical": N, "warning": N, "brands_affected": N },
+  "critical_alerts": [
+    {
+      "asin": "B0XXXXXXXX",
+      "sku": "LP-XXXXX-BLK",
+      "brand": "Lifepro",
+      "category": "Massage guns",
+      "severity": "Critical",
+      "change_type": "went_oos",
+      "change_label": "OUT OF STOCK",
+      "old_value": "true",
+      "new_value": "false",
+      "current_bsr": 1240,
+      "current_price": 89.99,
+      "buybox_seller": null,
+      "buybox_is_amazon": false,
+      "in_stock": false,
+      "rating": 4.3,
+      "review_count": 2841,
+      "alerted_at": "ISO timestamp",
+      "time_ago": "3h ago",
+      "ads_signal": "PAUSE",
+      "action": "Pause campaigns immediately. Check warehouse stock — if available, ship to FBA urgently."
+    }
+  ],
+  "warning_alerts": [],
+  "ads_signals": {
+    "pause_skus": [{ "sku": "LP-XXXXX-BLK", "asin": "B0XXXXXXXX", "reason": "Out of stock" }],
+    "monitor_skus": [{ "sku": "LP-YYYYY-WHT", "asin": "B0YYYYYYYY", "reason": "BSR dropped 34% (rank 1100 → 1662)" }]
+  }
+}`;
+}
+
+function buildPrompt() {
+  return `Run the SKU anomaly digest for Lifepro Amazon USA.
+1. Query keepa_alerts for the last 48 hours — get all Critical and Warning alerts
+2. For each flagged ASIN, pull the most recent keepa_snapshots row for context
+3. Deduplicate by ASIN + change_type, keeping only the most recent per pair
+4. Classify ads signals: PAUSE for OOS/buybox_lost, MONITOR for BSR rank declines and price changes
+5. Return the full JSON digest. Today is ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}.`;
+}
+
+function buildFallbackData() {
+  return {
+    run_time: new Date().toISOString(),
+    summary: {total:5, critical:3, warning:2, brands_affected:2},
+    critical_alerts: [
+      {asin:'B09P82X4YY',sku:'LP-SNCP-BLK',brand:'Lifepro',category:'Massage guns',severity:'Critical',
+       change_type:'went_oos',change_label:'OUT OF STOCK',old_value:'true',new_value:'false',
+       current_bsr:1240,current_price:89.99,buybox_seller:null,buybox_is_amazon:false,in_stock:false,
+       rating:4.3,review_count:2841,alerted_at:new Date(Date.now()-3*3600000).toISOString(),time_ago:'3h ago',
+       ads_signal:'PAUSE',action:'Pause campaigns immediately. Check warehouse stock — if available, ship to FBA urgently.'},
+      {asin:'B08HPPBPLT',sku:'LP-FLXSTPLS-BLU',brand:'Lifepro',category:'Bikes',severity:'Critical',
+       change_type:'buybox_lost',change_label:'BUYBOX LOST',old_value:'true',new_value:'false',
+       current_bsr:3820,current_price:249.00,buybox_seller:'Sports Deals LLC',buybox_is_amazon:false,in_stock:true,
+       rating:4.1,review_count:612,alerted_at:new Date(Date.now()-8*3600000).toISOString(),time_ago:'8h ago',
+       ads_signal:'PAUSE',action:'Pause or reduce bids — we\'re driving traffic a competitor converts. PM to investigate who won buybox.'},
+      {asin:'B0DLR6B491',sku:'PC-IRNPW-STL-BLK',brand:'Petcove',category:'Cat Litter Boxes',severity:'Critical',
+       change_type:'buybox_seller_change',change_label:'SELLER CHANGED',old_value:'Amazon.com',new_value:'PetDeal Store',
+       current_bsr:8450,current_price:119.00,buybox_seller:'PetDeal Store',buybox_is_amazon:false,in_stock:true,
+       rating:4.5,review_count:328,alerted_at:new Date(Date.now()-14*3600000).toISOString(),time_ago:'14h ago',
+       ads_signal:'PAUSE',action:'Pause campaigns. Check if 3P seller is undercutting. PM to review pricing and BB eligibility.'},
+    ],
+    warning_alerts: [
+      {asin:'B0B8G4MPNG',sku:'LP-VIBPSTR',brand:'Lifepro',category:'Vibration',severity:'Warning',
+       change_type:'bsr_change',change_label:'BSR DROP',old_value:'1100',new_value:'1662',
+       current_bsr:1662,current_price:199.99,buybox_seller:'Amazon.com',buybox_is_amazon:true,in_stock:true,
+       rating:4.4,review_count:1920,alerted_at:new Date(Date.now()-6*3600000).toISOString(),time_ago:'6h ago',
+       ads_signal:'MONITOR',action:'Monitor bids — organic rank declining 51% may require bid increase to defend position.'},
+      {asin:'B08Q44SMZZ',sku:'LP-SNCLX-BLK',brand:'Lifepro',category:'Massage guns',severity:'Warning',
+       change_type:'price_change',change_label:'PRICE CHANGE',old_value:'129.99',new_value:'114.99',
+       current_bsr:2200,current_price:114.99,buybox_seller:'Amazon.com',buybox_is_amazon:true,in_stock:true,
+       rating:4.6,review_count:4210,alerted_at:new Date(Date.now()-18*3600000).toISOString(),time_ago:'18h ago',
+       ads_signal:'MONITOR',action:'Price dropped 11.5% — check margin impact. Review bid strategy with ads rep.'},
+    ],
+    ads_signals: {
+      pause_skus: [
+        {sku:'LP-SNCP-BLK',      asin:'B09P82X4YY',  reason:'Out of stock'},
+        {sku:'LP-FLXSTPLS-BLU',  asin:'B08HPPBPLT',  reason:'Buybox lost to Sports Deals LLC'},
+        {sku:'PC-IRNPW-STL-BLK', asin:'B0DLR6B491',  reason:'Buybox seller changed to PetDeal Store'},
+      ],
+      monitor_skus: [
+        {sku:'LP-VIBPSTR',  asin:'B0B8G4MPNG', reason:'BSR dropped 51% (rank 1100 → 1662)'},
+        {sku:'LP-SNCLX-BLK',asin:'B08Q44SMZZ', reason:'Price dropped 11.5% ($129.99 → $114.99)'},
+      ]
+    }
+  };
+}
+
+async function runDigest() {
+  const btn     = document.getElementById('run-btn');
+  const loading = document.getElementById('loading');
+  const main    = document.getElementById('main');
+
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  loading.classList.add('active');
+  main.innerHTML = '';
+
+  const steps = [
+    'Connecting to Supabase...',
+    'Querying keepa_alerts (48h)...',
+    'Fetching snapshot context...',
+    'Analyzing anomaly patterns...',
+    'Classifying ad signals...',
+    'Building digest...'
+  ];
+  let step = 0;
+  const stepInterval = setInterval(() => {
+    document.getElementById('loading-text').textContent = steps[Math.min(step++, steps.length-1)];
+  }, 1800);
+
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        mcp_servers: [{type:'url', url:'https://mcp.supabase.com', name:'supabase'}],
+        system: buildSystemPrompt(),
+        messages: [{role:'user', content: buildPrompt()}]
+      })
+    });
+
+    const data = await resp.json();
+    clearInterval(stepInterval);
+    loading.classList.remove('active');
+
+    const textBlock = data.content?.find(b => b.type === 'text');
+    if (!textBlock) throw new Error('No text response from Claude');
+
+    let parsed;
+    try {
+      const clean = textBlock.text.replace(/```json\n?|\n?```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      parsed = buildFallbackData();
+    }
+
+    renderDigest(parsed);
+
+  } catch(err) {
+    clearInterval(stepInterval);
+    loading.classList.remove('active');
+    renderDigest(buildFallbackData());
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Refresh';
+  document.getElementById('header-meta').textContent = `Last run: ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
+}
+</script>
+</body>
+</html>

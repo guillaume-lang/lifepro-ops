@@ -212,12 +212,12 @@ async function runDigest() {
 
   try {
     const prompt = buildPrompt();
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('/api/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        max_tokens: 8000,
         mcp_servers: [{type:'url', url:'https://mcp.monday.com/mcp', name:'monday-mcp'}],
         system: buildSystemPrompt(),
         messages: [{role:'user', content: prompt}]

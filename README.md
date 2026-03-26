@@ -8,8 +8,8 @@ Amazon USA Operations Platform — automated listing health, delivery intelligen
 |---|---|---|
 | Listing Health Digest | https://lifepro-listing-health.vercel.app | Live |
 | Deal PM Assistant | https://lifepro-deal-pm.vercel.app | Live |
-| SKU Anomaly Detector | Coming P2 | Planned |
-| Inventory Forecaster | Coming P3 | Planned |
+| SKU Anomaly Detector | https://lifepro-sku-anomaly.vercel.app | Live |
+| Inventory Forecaster | https://lifepro-inventory.vercel.app | Live |
 | PPC Decision Engine | Coming P4 | Planned |
 | Category Intelligence | Coming P5 | Planned |
 | Command Hub | Coming P7 | Planned |
@@ -20,6 +20,8 @@ Amazon USA Operations Platform — automated listing health, delivery intelligen
 tools/           # Frontend tools (deployed to Vercel)
   listing-health/  # Daily listing health digest
   deal-pm/         # Deal planning PM assistant
+  sku-anomaly/     # SKU anomaly monitor — Keepa BSR/price/buybox signals
+  inventory-forecast/  # Inventory + PO forecaster — WH stock coverage vs lead time
 
 scraper/         # Playwright scrapers (run via GitHub Actions)
   scraper/         # Python package
@@ -37,6 +39,10 @@ skills/          # Claude skill files
   listing-health-automator/
     SKILL.md
     references/
+  sku-anomaly-detector/
+    SKILL.md
+  inventory-forecaster/
+    SKILL.md
 
 .github/workflows/
   delivery-scraper.yml  # Runs daily at 6am EST

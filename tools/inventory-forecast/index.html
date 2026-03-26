@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory Forecaster — Lifepro</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0d0f;--surface:#13151a;--surface2:#1a1d24;--border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);--text:#e2e0da;--muted:#6b6962;--muted2:#3d3c39;
+  --red:#c0392b;--red-dim:rgba(192,57,43,0.15);--red-light:#e74c3c;
+  --amber:#c17f24;--amber-dim:rgba(193,127,36,0.12);--amber-light:#e6a32e;
+  --yellow:#b5a020;--yellow-dim:rgba(181,160,32,0.1);--yellow-light:#d4be28;
+  --green:#1a7a4a;--green-dim:rgba(26,122,74,0.12);--green-light:#27ae60;
+  --blue:#1a5fa0;--blue-light:#3498db;--blue-dim:rgba(26,95,160,0.12);
+  --mono:'JetBrains Mono','Fira Code','Cascadia Code',monospace;
+}
+
+/* THEME SWITCHER */
+.theme-picker{display:flex;align-items:center;gap:5px;margin-left:12px}
+.theme-swatch{width:14px;height:14px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s,transform 0.1s;flex-shrink:0}
+.theme-swatch:hover{transform:scale(1.2)}
+.theme-swatch.active{border-color:var(--text)}
+.swatch-dark{background:#13151a;box-shadow:0 0 0 1px rgba(255,255,255,0.2)}
+.swatch-light{background:#ffffff;box-shadow:0 0 0 1px rgba(0,0,0,0.2)}
+.swatch-contrast{background:#000;box-shadow:0 0 0 1px #ff4444}
+.swatch-slate{background:#2d3648;box-shadow:0 0 0 1px rgba(255,255,255,0.2)}
+
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:48px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.header-mark{width:18px;height:18px;background:var(--green-light);clip-path:polygon(50% 0%,100% 100%,0% 100%);flex-shrink:0}
+.header-title{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+.header-sep{width:1px;height:16px;background:var(--border2)}
+.header-meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.run-btn{margin-left:auto;padding:5px 14px;border-radius:6px;border:1px solid var(--green-light);background:var(--green-dim);color:var(--green-light);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.04em;transition:all 0.15s}
+.run-btn:hover{background:var(--green-light);color:#001a0a}
+.run-btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* LOADING */
+.loading{display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px}
+.loading.active{display:flex}
+.loading-text{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:0.06em}
+.spinner{display:flex;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green-light);animation:bounce 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:0.2s}.dot:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+
+/* MAIN */
+.main{padding:20px;max-width:960px}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);font-size:13px}
+.empty-state p{margin-bottom:8px}
+.empty-state .hint{font-family:var(--mono);font-size:11px;color:var(--muted2)}
+
+/* SUMMARY BAR */
+.summary-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:20px}
+.sum-card{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:10px 14px}
+.sum-label{font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;font-family:var(--mono)}
+.sum-val{font-size:22px;font-weight:600;font-family:var(--mono)}
+.sum-card.reorder .sum-val{color:var(--red-light)}
+.sum-card.low .sum-val{color:var(--amber-light)}
+.sum-card.overstock .sum-val{color:var(--yellow-light)}
+.sum-card.ok .sum-val{color:var(--green-light)}
+.run-time{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:right;margin-bottom:14px}
+
+/* SECTIONS */
+.section{margin-bottom:24px}
+.section-header{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:6px;margin-bottom:8px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-family:var(--mono)}
+.sec-reorder{background:var(--red-dim);border:0.5px solid rgba(192,57,43,0.3);color:var(--red-light)}
+.sec-low{background:var(--amber-dim);border:0.5px solid rgba(193,127,36,0.3);color:var(--amber-light)}
+.sec-overstock{background:var(--yellow-dim);border:0.5px solid rgba(181,160,32,0.25);color:var(--yellow-light)}
+.sec-ok{background:var(--green-dim);border:0.5px solid rgba(26,122,74,0.3);color:var(--green-light)}
+.sec-count{margin-left:auto;font-size:10px;opacity:0.8}
+
+/* OK BOX */
+.ok-box{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:14px 18px;color:var(--green-light);font-family:var(--mono);font-size:13px}
+
+/* FORECAST CARDS */
+.fc-card{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;border-left:3px solid transparent}
+.fc-card.reorder{border-left-color:var(--red-light)}
+.fc-card.low{border-left-color:var(--amber-light)}
+.fc-card.overstock{border-left-color:var(--yellow-light)}
+.fc-top{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.fc-sku{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text)}
+.fc-asin{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:2px}
+.brand-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;letter-spacing:0.05em;text-transform:uppercase;align-self:center}
+.status-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;letter-spacing:0.05em;text-transform:uppercase;align-self:center}
+.badge-reorder{background:var(--red-dim);color:var(--red-light)}
+.badge-low{background:var(--amber-dim);color:var(--amber-light)}
+.badge-overstock{background:var(--yellow-dim);color:var(--yellow-light)}
+.top10-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:rgba(52,152,219,0.15);color:var(--blue-light);letter-spacing:0.05em;text-transform:uppercase;align-self:center}
+
+.fc-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.fc-metric{background:var(--surface2);border-radius:5px;padding:7px 10px}
+.fc-metric-label{font-size:9px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-family:var(--mono);margin-bottom:2px}
+.fc-metric-val{font-size:15px;font-weight:600;font-family:var(--mono)}
+.fc-metric-val.danger{color:var(--red-light)}
+.fc-metric-val.warn{color:var(--amber-light)}
+.fc-metric-val.excess{color:var(--yellow-light)}
+.fc-metric-val.ok{color:var(--green-light)}
+
+.po-box{background:var(--red-dim);border:0.5px solid rgba(192,57,43,0.3);border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:8px}
+.po-box strong{color:var(--red-light)}
+
+.fc-meta-row{display:flex;flex-wrap:wrap;gap:6px}
+.meta-pill{font-size:10px;padding:2px 8px;border-radius:3px;background:var(--surface2);color:var(--muted);font-family:var(--mono)}
+
+/* DISCLAIMER */
+.disclaimer{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:12px 16px;margin-top:24px;font-size:11px;color:var(--muted);line-height:1.6}
+.disclaimer strong{color:var(--text)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-mark"></div>
+  <span class="header-title">Inventory Forecaster</span>
+  <div class="header-sep"></div>
+  <span class="header-meta">1P Vendor Central · Shared WH · 100–120 day lead time</span>
+  <div class="theme-picker">
+    <div class="theme-swatch swatch-dark  active" title="Dark"          onclick="applyTheme('dark')"></div>
+    <div class="theme-swatch swatch-light"         title="Light"         onclick="applyTheme('light')"></div>
+    <div class="theme-swatch swatch-contrast"      title="High Contrast" onclick="applyTheme('contrast')"></div>
+    <div class="theme-swatch swatch-slate"         title="Slate"         onclick="applyTheme('slate')"></div>
+  </div>
+  <button class="run-btn" id="run-btn" onclick="runForecast()">Run Forecast</button>
+</div>
+
+<div class="loading" id="loading">
+  <div class="spinner"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  <div class="loading-text" id="loading-text">Reading Monday inventory board...</div>
+</div>
+
+<div class="main" id="main">
+  <div class="empty-state">
+    <p>Click <strong>Run Forecast</strong> to analyze inventory cover for all SKUs.</p>
+    <p class="hint">Pulls WH stock from Monday · BSR velocity from Keepa · 100–120 day lead time</p>
+  </div>
+</div>
+
+<script>
+/* ── THEMES ────────────────────────────────────────────────────────── */
+const THEMES = {
+  dark: {
+    '--bg':'#0c0d0f','--surface':'#13151a','--surface2':'#1a1d24',
+    '--border':'rgba(255,255,255,0.07)','--border2':'rgba(255,255,255,0.12)',
+    '--text':'#e2e0da','--muted':'#6b6962','--muted2':'#3d3c39',
+    '--red':'#c0392b','--red-dim':'rgba(192,57,43,0.15)','--red-light':'#e74c3c',
+    '--amber':'#c17f24','--amber-dim':'rgba(193,127,36,0.12)','--amber-light':'#e6a32e',
+    '--yellow':'#b5a020','--yellow-dim':'rgba(181,160,32,0.1)','--yellow-light':'#d4be28',
+    '--green':'#1a7a4a','--green-dim':'rgba(26,122,74,0.12)','--green-light':'#27ae60',
+    '--blue':'#1a5fa0','--blue-light':'#3498db','--blue-dim':'rgba(26,95,160,0.12)'
+  },
+  light: {
+    '--bg':'#f5f5f3','--surface':'#ffffff','--surface2':'#f0f0ee',
+    '--border':'rgba(0,0,0,0.08)','--border2':'rgba(0,0,0,0.14)',
+    '--text':'#1a1a18','--muted':'#7a7a78','--muted2':'#c0c0be',
+    '--red':'#c0392b','--red-dim':'rgba(192,57,43,0.08)','--red-light':'#c0392b',
+    '--amber':'#b36b00','--amber-dim':'rgba(179,107,0,0.08)','--amber-light':'#b36b00',
+    '--yellow':'#8a7200','--yellow-dim':'rgba(138,114,0,0.08)','--yellow-light':'#8a7200',
+    '--green':'#1a7a4a','--green-dim':'rgba(26,122,74,0.08)','--green-light':'#1a7a4a',
+    '--blue':'#1a5fa0','--blue-light':'#1a5fa0','--blue-dim':'rgba(26,95,160,0.08)'
+  },
+  contrast: {
+    '--bg':'#000000','--surface':'#0a0a0a','--surface2':'#111111',
+    '--border':'rgba(255,255,255,0.2)','--border2':'rgba(255,255,255,0.35)',
+    '--text':'#ffffff','--muted':'#bbbbbb','--muted2':'#555555',
+    '--red':'#ff4444','--red-dim':'rgba(255,68,68,0.2)','--red-light':'#ff4444',
+    '--amber':'#ffaa00','--amber-dim':'rgba(255,170,0,0.2)','--amber-light':'#ffaa00',
+    '--yellow':'#ffee00','--yellow-dim':'rgba(255,238,0,0.15)','--yellow-light':'#ffee00',
+    '--green':'#00ff88','--green-dim':'rgba(0,255,136,0.15)','--green-light':'#00ff88',
+    '--blue':'#4488ff','--blue-light':'#4488ff','--blue-dim':'rgba(68,136,255,0.15)'
+  },
+  slate: {
+    '--bg':'#1e2433','--surface':'#252d3d','--surface2':'#2d3648',
+    '--border':'rgba(255,255,255,0.07)','--border2':'rgba(255,255,255,0.14)',
+    '--text':'#d4dae8','--muted':'#6b7590','--muted2':'#3d4560',
+    '--red':'#c0392b','--red-dim':'rgba(192,57,43,0.18)','--red-light':'#e74c3c',
+    '--amber':'#c17f24','--amber-dim':'rgba(193,127,36,0.15)','--amber-light':'#e6a32e',
+    '--yellow':'#b5a020','--yellow-dim':'rgba(181,160,32,0.12)','--yellow-light':'#d4be28',
+    '--green':'#1a7a4a','--green-dim':'rgba(26,122,74,0.15)','--green-light':'#27ae60',
+    '--blue':'#1a5fa0','--blue-light':'#3498db','--blue-dim':'rgba(26,95,160,0.15)'
+  }
+};
+
+function applyTheme(name) {
+  const t = THEMES[name] || THEMES.dark;
+  const r = document.documentElement;
+  Object.entries(t).forEach(([k,v]) => r.style.setProperty(k, v));
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+  const sw = document.querySelector(`.swatch-${name}`);
+  if (sw) sw.classList.add('active');
+  localStorage.setItem('lp_inv_theme', name);
+}
+
+(function initTheme() {
+  const saved = localStorage.getItem('lp_inv_theme') || 'dark';
+  applyTheme(saved);
+})();
+
+/* ── BRAND COLORS ────────────────────────────────────────────────── */
+const BRAND_COLORS = {
+  'Lifepro':  {bg:'rgba(253,171,61,0.15)',  color:'#fdab3d'},
+  'Oaktiv':   {bg:'rgba(127,83,71,0.2)',    color:'#c8957a'},
+  'Petcove':  {bg:'rgba(169,190,232,0.15)', color:'#a9bee8'},
+  'Joyberri': {bg:'rgba(255,203,0,0.12)',   color:'#d4aa00'},
+  'Culvani':  {bg:'rgba(87,155,252,0.12)',  color:'#579bfc'},
+  'Sunello':  {bg:'rgba(255,109,59,0.12)',  color:'#ff6d3b'},
+};
+
+/* ── SYSTEM PROMPT ───────────────────────────────────────────────── */
+function buildSystemPrompt() {
+  return `You are the Inventory Forecaster for Lifepro Amazon USA (1P Vendor Central).
+
+BUSINESS CONTEXT:
+- Lifepro is 1P only — Amazon sends POs, Lifepro ships from shared warehouse. No FBA.
+- Warehouse stock is shared across all channels (Amazon VC, DTC, retail, etc.)
+- Factory lead time: 100–120 days
+- Top 10 SKUs (by revenue) must maintain 6 months (180 days) minimum cover
+- Risk threshold: avoid 180-day aging overstock
+
+CLASSIFICATION THRESHOLDS:
+Regular SKUs (days_of_cover):
+  REORDER_NOW  = < 120 days  — must reorder immediately, lead time risk
+  LOW          = 120-149 days — approaching lead time window
+  WATCH        = 150-179 days — monitor, order soon
+  OK           = 180-209 days — healthy
+  OVERSTOCK    = >= 210 days  — aging risk
+
+Top 10 SKUs (days_of_cover):
+  REORDER_NOW  = < 180 days  — below 6-month target
+  LOW          = 180-209 days — at minimum
+  OK           = >= 210 days  — healthy
+
+VELOCITY FORMULA:
+  monthly_units = bsr_to_monthly_units(bsr, category)
+  bsr_trend_adj = 1.0-1.2 if BSR improving (rank number falling = more sales), 0.8-1.0 if declining
+  channel_split_factor = 0.7 (Amazon takes approx 70% of shared WH demand)
+  daily_velocity = monthly_units x bsr_trend_adj x channel_split_factor / 30
+  days_of_cover = wh_stock / daily_velocity
+  recommended_po_qty = ceil((target_days - days_of_cover) x daily_velocity)
+    where target_days = 210 for Top 10, 195 for regular
+
+BSR TO MONTHLY UNITS BENCHMARKS:
+Category         | BSR 1-500 | 500-3k | 3k-20k | 20k-100k | >100k
+Massage guns     |    800    |   400  |   80   |    20    |   5
+Vibration plates |    600    |   300  |   60   |    15    |   4
+Light therapy    |    700    |   350  |   70   |    18    |   4
+Default          |    500    |   250  |   50   |    12    |   3
+
+EDGE CASES:
+- No BSR in Keepa: use category median (3k-20k band)
+- WH stock = 0: status = REORDER_NOW, days_of_cover = 0, daily_velocity from BSR
+- No category match: use Default benchmarks
+- If daily_velocity rounds to 0: set to 0.1
+
+DATA SOURCES:
+Monday board 8574487078 — Amazon USA Products
+  WH stock:  column numeric_mkyrk4we
+  Brand:     column color_mktjf611
+  ASIN:      column text_mknhd0s7
+  Category:  column text_mkxp62c
+  Item name = SKU
+
+Supabase table: keepa_snapshots
+  Columns: asin, bsr, snapped_at
+  Get latest snapshot per ASIN (ORDER BY snapped_at DESC LIMIT 1)
+  Also get the snapshot from 7 days ago for BSR trend (bsr_trend_adj)
+
+STEPS:
+1. Read all items from Monday board 8574487078
+2. For each ASIN query keepa_snapshots for latest BSR and 7-day-ago BSR
+3. Apply velocity formula and calculate days_of_cover
+4. Identify Top 10 SKUs (highest WH stock value or mark the top 10 most active ASINs)
+5. Classify each SKU using thresholds
+6. Return ONLY the JSON below with no prose or markdown fences
+
+OUTPUT (strict JSON only):
+{
+  "run_time": "<ISO 8601>",
+  "summary": {"total":0,"reorder_now":0,"low":0,"watch":0,"overstock":0,"ok":0},
+  "reorder_now": [{"sku":"","asin":"","brand":"","category":"","wh_stock":0,"bsr":0,"daily_velocity":0,"days_of_cover":0,"recommended_po_qty":0,"is_top_10":false,"status":"REORDER_NOW"}],
+  "low": [],
+  "watch": [],
+  "overstock": [],
+  "ok_count": 0
+}`;
+}
+
+/* ── FALLBACK DATA ────────────────────────────────────────────────── */
+function buildFallbackData() {
+  return {
+    run_time: new Date().toISOString(),
+    summary: {total:0,reorder_now:0,low:0,watch:0,overstock:0,ok:0},
+    reorder_now:[],low:[],watch:[],overstock:[],ok_count:0
+  };
+}
+
+/* ── RENDER HELPERS ──────────────────────────────────────────────── */
+function coverClass(status) {
+  if (status === 'REORDER_NOW') return 'danger';
+  if (status === 'LOW' || status === 'WATCH') return 'warn';
+  if (status === 'OVERSTOCK') return 'excess';
+  return 'ok';
+}
+
+function fcCard(item, cardClass) {
+  const bc = BRAND_COLORS[item.brand] || {bg:'rgba(100,100,100,0.15)', color:'#aaa'};
+  const statusLabels = {
+    REORDER_NOW:{cls:'badge-reorder',label:'REORDER NOW'},
+    LOW:        {cls:'badge-low',    label:'LOW STOCK'},
+    WATCH:      {cls:'badge-low',    label:'WATCH'},
+    OVERSTOCK:  {cls:'badge-overstock',label:'OVERSTOCK'},
+  };
+  const sb = statusLabels[item.status] || {cls:'', label: item.status || ''};
+  const doc = Math.round(item.days_of_cover || 0);
+  const vel = item.daily_velocity != null ? Number(item.daily_velocity).toFixed(1) : '—';
+  const bsr = item.bsr ? Number(item.bsr).toLocaleString() : 'No BSR';
+
+  return `
+<div class="fc-card ${cardClass}">
+  <div class="fc-top">
+    <span class="fc-sku">${item.sku || ''}</span>
+    <span class="fc-asin">${item.asin || ''}</span>
+    <span class="brand-badge" style="background:${bc.bg};color:${bc.color}">${item.brand || ''}</span>
+    <span class="status-badge ${sb.cls}">${sb.label}</span>
+    ${item.is_top_10 ? '<span class="top10-badge">Top 10 SKU</span>' : ''}
+  </div>
+  <div class="fc-metrics">
+    <div class="fc-metric">
+      <div class="fc-metric-label">WH Stock</div>
+      <div class="fc-metric-val">${(item.wh_stock || 0).toLocaleString()} <span style="font-size:10px;color:var(--muted)">units</span></div>
+    </div>
+    <div class="fc-metric">
+      <div class="fc-metric-label">Days of Cover</div>
+      <div class="fc-metric-val ${coverClass(item.status)}">${doc} <span style="font-size:10px;color:var(--muted)">days</span></div>
+    </div>
+    <div class="fc-metric">
+      <div class="fc-metric-label">Daily Velocity</div>
+      <div class="fc-metric-val">${vel} <span style="font-size:10px;color:var(--muted)">units/day</span></div>
+    </div>
+  </div>
+  ${item.recommended_po_qty ? `<div class="po-box">PO Recommendation: <strong>${Number(item.recommended_po_qty).toLocaleString()} units</strong> needed to reach target cover</div>` : ''}
+  <div class="fc-meta-row">
+    <span class="meta-pill">BSR ${bsr}</span>
+    <span class="meta-pill">${item.category || 'Unknown category'}</span>
+    <span class="meta-pill">${item.is_top_10 ? '6-month cover target' : 'Standard cover target'}</span>
+  </div>
+</div>`;
+}
+
+function renderSection(title, secClass, items, cardClass) {
+  if (!items || items.length === 0) return '';
+  return `
+<div class="section">
+  <div class="section-header ${secClass}">${title}<span class="sec-count">${items.length} SKU${items.length !== 1 ? 's' : ''}</span></div>
+  ${items.map(i => fcCard(i, cardClass)).join('')}
+</div>`;
+}
+
+function render(data) {
+  const main = document.getElementById('main');
+  const s = data.summary || {};
+
+  let html = `<div class="run-time">Run at ${new Date(data.run_time).toLocaleString()}</div>`;
+
+  html += `
+<div class="summary-bar">
+  <div class="sum-card"><div class="sum-label">SKUs Checked</div><div class="sum-val">${s.total || 0}</div></div>
+  <div class="sum-card reorder"><div class="sum-label">Reorder Now</div><div class="sum-val">${s.reorder_now || 0}</div></div>
+  <div class="sum-card low"><div class="sum-label">Low / Watch</div><div class="sum-val">${(s.low || 0) + (s.watch || 0)}</div></div>
+  <div class="sum-card overstock"><div class="sum-label">Overstock</div><div class="sum-val">${s.overstock || 0}</div></div>
+  <div class="sum-card ok"><div class="sum-label">OK</div><div class="sum-val">${s.ok || 0}</div></div>
+</div>`;
+
+  html += renderSection('REORDER NOW', 'sec-reorder', data.reorder_now, 'reorder');
+  html += renderSection('LOW STOCK', 'sec-low', data.low, 'low');
+  html += renderSection('WATCH', 'sec-low', data.watch, 'low');
+  html += renderSection('OVERSTOCK', 'sec-overstock', data.overstock, 'overstock');
+
+  const okCount = data.ok_count || 0;
+  if (okCount > 0) {
+    html += `
+<div class="section">
+  <div class="section-header sec-ok">OK — No Action Needed<span class="sec-count">${okCount} SKUs</span></div>
+  <div class="ok-box">${okCount} SKU${okCount !== 1 ? 's are' : ' is'} healthy with adequate inventory cover. No action needed.</div>
+</div>`;
+  }
+
+  html += `
+<div class="disclaimer">
+  <strong>Estimated velocity — not actual sales data</strong><br>
+  Velocity is derived from Keepa BSR rankings using category benchmarks, not real units-sold data.
+  Channel split factor (0.7) assumes Amazon takes ~70% of shared warehouse demand.
+  BSR benchmarks are category estimates — not Lifepro-specific actuals.
+  Pending POs already in transit are not accounted for here.
+  <em>Power BI actual sales integration is planned as a future enhancement.</em>
+</div>`;
+
+  main.innerHTML = html;
+}
+
+/* ── MAIN RUN ────────────────────────────────────────────────────── */
+async function runForecast() {
+  const btn     = document.getElementById('run-btn');
+  const loading = document.getElementById('loading');
+  const main    = document.getElementById('main');
+
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  loading.classList.add('active');
+  main.innerHTML = '';
+
+  const steps = [
+    'Reading Monday inventory board...',
+    'Fetching Keepa BSR snapshots...',
+    'Calculating velocity and days of cover...',
+    'Classifying SKUs by cover threshold...',
+    'Building forecast report...'
+  ];
+  let step = 0;
+  const stepInterval = setInterval(() => {
+    document.getElementById('loading-text').textContent = steps[Math.min(step++, steps.length - 1)];
+  }, 2500);
+
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8000,
+        mcp_servers: [
+          {type:'url', url:'https://mcp.monday.com/mcp', name:'monday-mcp'},
+          {type:'url', url:'https://mcp.supabase.com',   name:'supabase'}
+        ],
+        system: buildSystemPrompt(),
+        messages: [{role:'user', content:'Run the inventory forecast now. Read Monday board 8574487078 for all SKUs and WH stock levels, then get the latest BSR from keepa_snapshots for each ASIN. Apply the velocity formula and return the full JSON forecast.'}]
+      })
+    });
+
+    const data = await resp.json();
+    clearInterval(stepInterval);
+    loading.classList.remove('active');
+
+    const textBlock = data.content?.find(b => b.type === 'text');
+    if (!textBlock) throw new Error('No response from Claude');
+
+    let parsed;
+    try {
+      const clean = textBlock.text.replace(/```json\n?|\n?```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      console.error('JSON parse error:', e, textBlock.text);
+      parsed = buildFallbackData();
+    }
+
+    render(parsed);
+
+  } catch(err) {
+    clearInterval(stepInterval);
+    loading.classList.remove('active');
+    main.innerHTML = `<div class="empty-state"><p style="color:var(--red-light)">Error: ${err.message}</p><p class="hint">Check browser console for details.</p></div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Forecast';
+  }
+}
+</script>
+</body>
+</html>
