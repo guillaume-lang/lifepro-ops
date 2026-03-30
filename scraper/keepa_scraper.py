@@ -18,11 +18,15 @@ BATCH_SIZE = 100
 CHANGE_RULES = [
     {"field": "bsr",            "pct_threshold": 20,  "severity": "Warning",  "type": "bsr_change"},
     {"field": "price_amazon",   "pct_threshold": 10,  "severity": "Warning",  "type": "price_change"},
-    {"field": "buybox_is_amazon","became_false": True, "severity": "Critical", "type": "buybox_lost"},
+    {"field": "buybox_is_amazon","became_false": True, "severity": "Critical", "type": "buybox_lost"},   # 1P: not Amazon = not us
     {"field": "buybox_seller",  "changed": True,       "severity": "Critical", "type": "buybox_seller_change"},
     {"field": "in_stock",       "became_false": True,  "severity": "Critical", "type": "went_oos"},
     {"field": "parent_asin",    "changed": True,       "severity": "Critical", "type": "parent_changed"},
+    {"field": "rating",         "dropped_by": 0.2,     "severity": "Warning",  "type": "rating_drop"},
 ]
+
+# Change types that get pushed to Teams (all others go to Supabase only)
+TEAMS_ALERT_TYPES = {"went_oos", "buybox_lost", "buybox_seller_change", "parent_changed", "bsr_change", "rating_drop", "price_change"}
 
 
 def fetch_keepa_batch(asins: List[str]) -> List[Dict]:
@@ -116,6 +120,8 @@ def detect_changes(curr: Dict, prev: Optional[Dict]) -> List[Dict]:
             triggered = (pv is True and cv is False)
         elif "changed" in rule:
             triggered = str(cv) != str(pv)
+        elif "dropped_by" in rule:
+            triggered = isinstance(pv, (int, float)) and isinstance(cv, (int, float)) and (pv - cv) >= rule["dropped_by"]
         if triggered:
             alerts.append({
                 "asin":       curr["asin"],
@@ -230,7 +236,7 @@ async def run():
         for a in all_alerts:
             by_sev[a["severity"]] = by_sev.get(a["severity"], 0) + 1
         print("[keepa] Alerts: " + str(by_sev))
-        for alert in [a for a in all_alerts if a["severity"] == "Critical"][:10]:
+        for alert in [a for a in all_alerts if a["change_type"] in TEAMS_ALERT_TYPES][:20]:
             await send_teams_alert(alert)
             await asyncio.sleep(0.5)
 
