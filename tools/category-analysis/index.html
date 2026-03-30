@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Category Analysis — Lifepro</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0d0f;--surface:#13151a;--surface2:#1a1d24;--surface3:#21252f;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e2e0da;--muted:#6b6962;--muted2:#3d3c39;
+  --red:#c0392b;--red-dim:rgba(192,57,43,0.15);--red-light:#e74c3c;
+  --amber:#c17f24;--amber-dim:rgba(193,127,36,0.12);--amber-light:#e6a32e;
+  --green:#1a7a4a;--green-dim:rgba(26,122,74,0.12);--green-light:#27ae60;
+  --blue:#1a5fa0;--blue-light:#3498db;--blue-dim:rgba(26,95,160,0.12);
+  --purple:#6d28d9;--purple-light:#8b5cf6;--purple-dim:rgba(109,40,217,0.12);
+  --mono:'JetBrains Mono','Fira Code',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:48px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20;flex-shrink:0}
+.header-mark{width:18px;height:18px;background:var(--purple-light);clip-path:polygon(50% 0%,100% 100%,0% 100%);flex-shrink:0}
+.header-title{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+.header-sep{width:1px;height:16px;background:var(--border2)}
+.header-meta{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.new-btn{margin-left:auto;padding:5px 14px;border-radius:6px;border:1px solid var(--purple-light);background:var(--purple-dim);color:var(--purple-light);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.04em;transition:all 0.15s}
+.new-btn:hover{background:var(--purple-light);color:#fff}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:260px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-header{padding:12px 16px;border-bottom:1px solid var(--border);font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.sidebar-empty{padding:24px 16px;color:var(--muted);font-size:12px;text-align:center}
+.analysis-item{padding:10px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background 0.1s}
+.analysis-item:hover{background:var(--surface2)}
+.analysis-item.active{background:var(--purple-dim);border-left:2px solid var(--purple-light)}
+.ai-category{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
+.ai-meta{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:5px}
+.ai-badges{display:flex;gap:4px;flex-wrap:wrap}
+.trend-badge{font-size:9px;font-weight:600;padding:1px 6px;border-radius:3px;letter-spacing:0.04em;text-transform:uppercase}
+.tb-up{background:var(--green-dim);color:var(--green-light)}
+.tb-down{background:var(--red-dim);color:var(--red-light)}
+.tb-flat{background:var(--surface2);color:var(--muted)}
+.tb-harder{background:var(--red-dim);color:var(--red-light)}
+.tb-easier{background:var(--green-dim);color:var(--green-light)}
+.tb-stable{background:var(--surface2);color:var(--muted)}
+.tb-high{background:var(--amber-dim);color:var(--amber-light)}
+.tb-medium{background:var(--surface2);color:var(--muted)}
+.tb-low{background:var(--green-dim);color:var(--green-light)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:24px;max-width:860px}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:80px 20px;color:var(--muted)}
+.empty-state h2{font-size:16px;color:var(--text);margin-bottom:8px}
+.empty-state p{font-size:13px;margin-bottom:20px}
+.empty-state .start-btn{padding:8px 20px;border-radius:6px;border:1px solid var(--purple-light);background:var(--purple-dim);color:var(--purple-light);font-size:13px;font-weight:600;cursor:pointer}
+
+/* FORM */
+.form-top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:14px}
+.form-field{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)}
+.form-input{background:var(--surface2);border:0.5px solid var(--border2);border-radius:5px;padding:7px 10px;color:var(--text);font-size:13px;outline:none;transition:border-color 0.15s}
+.form-input:focus{border-color:var(--purple-light)}
+.form-input::placeholder{color:var(--muted2)}
+
+/* ACCORDION */
+.accordion{margin-bottom:8px;background:var(--surface);border:0.5px solid var(--border);border-radius:8px;overflow:hidden}
+.acc-header{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;border-bottom:0.5px solid transparent;transition:background 0.1s}
+.acc-header:hover{background:var(--surface2)}
+.acc-header.open{border-bottom-color:var(--border)}
+.acc-source{font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;letter-spacing:0.05em;text-transform:uppercase}
+.src-poe{background:rgba(253,171,61,0.15);color:#fdab3d}
+.src-growth{background:var(--green-dim);color:var(--green-light)}
+.src-marketplace{background:var(--blue-dim);color:var(--blue-light)}
+.src-google{background:rgba(66,133,244,0.15);color:#4285f4}
+.src-datarova{background:rgba(255,109,59,0.15);color:#ff6d3b}
+.src-smartscout{background:var(--purple-dim);color:var(--purple-light)}
+.src-datadive{background:rgba(127,83,71,0.15);color:#c8957a}
+.acc-title{font-size:13px;font-weight:500;color:var(--text)}
+.acc-chevron{margin-left:auto;color:var(--muted);font-size:12px;transition:transform 0.15s}
+.acc-header.open .acc-chevron{transform:rotate(180deg)}
+.acc-body{display:none;padding:14px}
+.acc-body.open{display:block}
+
+.field-grid{display:grid;gap:10px;margin-bottom:12px}
+.grid-3{grid-template-columns:1fr 1fr 1fr}
+.grid-2{grid-template-columns:1fr 1fr}
+.field-group{display:flex;flex-direction:column;gap:4px}
+.field-group label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.field-group input{background:var(--surface2);border:0.5px solid var(--border2);border-radius:4px;padding:6px 8px;color:var(--text);font-size:12px;font-family:var(--mono);outline:none}
+.field-group input:focus{border-color:var(--purple-light)}
+.field-group input::placeholder{color:var(--muted2)}
+.period-label{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;font-style:italic}
+
+textarea.form-input{resize:vertical;min-height:70px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.5}
+
+/* BRAND ROWS */
+.brand-row{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:8px;margin-bottom:6px;align-items:end}
+.brand-row-header{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:8px;margin-bottom:4px}
+.brand-row-header span{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em}
+
+/* SUBMIT */
+.submit-row{display:flex;justify-content:flex-end;margin-top:16px;gap:10px}
+.analyse-btn{padding:8px 24px;border-radius:6px;border:1px solid var(--purple-light);background:var(--purple-dim);color:var(--purple-light);font-size:12px;font-weight:600;cursor:pointer;letter-spacing:0.04em;transition:all 0.15s}
+.analyse-btn:hover{background:var(--purple-light);color:#fff}
+.analyse-btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* LOADING */
+.loading-overlay{display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px}
+.loading-overlay.active{display:flex}
+.loading-text{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:0.06em}
+.spinner{display:flex;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--purple-light);animation:bounce 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:0.2s}.dot:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}
+
+/* REPORT */
+.report-header{margin-bottom:20px}
+.report-title{font-size:20px;font-weight:700;margin-bottom:4px}
+.report-subtitle{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.signal-bar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.signal-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;letter-spacing:0.04em}
+.signal-label{font-size:9px;text-transform:uppercase;opacity:0.7;margin-right:2px}
+.sp-up{background:var(--green-dim);color:var(--green-light);border:0.5px solid rgba(26,122,74,0.3)}
+.sp-down{background:var(--red-dim);color:var(--red-light);border:0.5px solid rgba(192,57,43,0.3)}
+.sp-flat{background:var(--surface2);color:var(--muted);border:0.5px solid var(--border2)}
+.sp-harder{background:var(--red-dim);color:var(--red-light);border:0.5px solid rgba(192,57,43,0.3)}
+.sp-easier{background:var(--green-dim);color:var(--green-light);border:0.5px solid rgba(26,122,74,0.3)}
+.sp-high{background:var(--amber-dim);color:var(--amber-light);border:0.5px solid rgba(193,127,36,0.3)}
+.sp-medium{background:var(--surface2);color:var(--muted);border:0.5px solid var(--border2)}
+.sp-low{background:var(--green-dim);color:var(--green-light);border:0.5px solid rgba(26,122,74,0.3)}
+
+.verdict-box{background:var(--surface);border:0.5px solid var(--border);border-left:3px solid var(--purple-light);border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:1.6}
+.verdict-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--purple-light);margin-bottom:6px}
+
+.report-section{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px}
+.rs-title{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.rs-body{font-size:13px;line-height:1.6;color:var(--text)}
+.rs-list{list-style:none;padding:0;display:flex;flex-direction:column;gap:5px}
+.rs-list li{font-size:12px;line-height:1.5;padding-left:14px;position:relative;color:var(--text)}
+.rs-list li::before{content:'→';position:absolute;left:0;color:var(--muted)}
+.rs-list.opp li::before{color:var(--green-light)}
+.rs-list.chal li::before{color:var(--amber-light)}
+.rs-list.risk li::before{color:var(--red-light)}
+.strat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.strat-col{background:var(--surface2);border-radius:6px;padding:10px 12px}
+.strat-col-title{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px}
+.strat-col.opp .strat-col-title{color:var(--green-light)}
+.strat-col.chal .strat-col-title{color:var(--amber-light)}
+.strat-col.risk .strat-col-title{color:var(--red-light)}
+.signal-note{font-size:11px;color:var(--muted);font-style:italic;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-mark"></div>
+  <span class="header-title">Category Analysis</span>
+  <div class="header-sep"></div>
+  <span class="header-meta">Lifepro Amazon USA · Market Intelligence</span>
+  <button class="new-btn" onclick="showForm()">+ New Analysis</button>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-header">Past Analyses</div>
+    <div id="sidebar-list"><div class="sidebar-empty">Loading...</div></div>
+  </div>
+
+  <div class="main" id="main">
+    <div class="empty-state" id="empty-state">
+      <h2>Category Analysis</h2>
+      <p>Standardised market intelligence across 7 data sources.<br>PMs fill in the numbers — Claude synthesises the insights.</p>
+      <button class="start-btn" onclick="showForm()">Start New Analysis</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── STATE ─────────────────────────────────────────────────────────── */
+let currentAnalysisId = null;
+
+/* ── SIDEBAR ─────────────────────────────────────────────────────── */
+async function loadSidebar() {
+  try {
+    const r = await fetch('/api/analyses?action=list');
+    const items = await r.json();
+    const list = document.getElementById('sidebar-list');
+    if (!items || !items.length) {
+      list.innerHTML = '<div class="sidebar-empty">No analyses yet.<br>Click + New Analysis to start.</div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const date = new Date(item.created_at).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+      const mBadge = trendBadge('market', item.market_trend);
+      const aBadge = trendBadge('asp', item.asp_trend);
+      const cBadge = compBadge(item.competition_trend);
+      return `<div class="analysis-item${currentAnalysisId===item.id?' active':''}" onclick="loadAnalysis('${item.id}')">
+        <div class="ai-category">${item.category || 'Unknown'}</div>
+        <div class="ai-meta">${item.period || ''} · ${item.analyst || ''} · ${date}</div>
+        <div class="ai-badges">${mBadge}${aBadge}${cBadge}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('sidebar-list').innerHTML = '<div class="sidebar-empty">Could not load analyses.</div>';
+  }
+}
+
+function trendBadge(type, val) {
+  if (!val) return '';
+  const label = type === 'market' ? 'Market' : 'ASP';
+  const arrow = val === 'up' ? '↑' : val === 'down' ? '↓' : '→';
+  const cls = val === 'up' ? 'tb-up' : val === 'down' ? 'tb-down' : 'tb-flat';
+  return `<span class="trend-badge ${cls}">${label} ${arrow}</span>`;
+}
+function compBadge(val) {
+  if (!val) return '';
+  const cls = val === 'harder' ? 'tb-harder' : val === 'easier' ? 'tb-easier' : 'tb-stable';
+  const labels = {harder:'Harder', easier:'Easier', stable:'Stable'};
+  return `<span class="trend-badge ${cls}">${labels[val]||val}</span>`;
+}
+
+async function loadAnalysis(id) {
+  currentAnalysisId = id;
+  const main = document.getElementById('main');
+  main.innerHTML = '<div class="loading-overlay active"><div class="spinner"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="loading-text">Loading analysis...</div></div>';
+  try {
+    const r = await fetch(`/api/analyses?action=get&id=${id}`);
+    const row = await r.json();
+    if (!row) throw new Error('Not found');
+    renderReport(row.analysis, row.category, row.period, row.analyst, row.created_at);
+    loadSidebar();
+  } catch(e) {
+    main.innerHTML = `<div class="empty-state"><p style="color:var(--red-light)">Error loading: ${e.message}</p></div>`;
+  }
+}
+
+/* ── FORM ────────────────────────────────────────────────────────── */
+function showForm() {
+  currentAnalysisId = null;
+  const main = document.getElementById('main');
+  main.innerHTML = buildForm();
+  loadSidebar();
+}
+
+function buildForm() {
+  return `
+<div style="max-width:800px">
+  <div style="margin-bottom:18px">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px">New Category Analysis</div>
+    <div style="font-size:12px;color:var(--muted)">Fill in data from each source, then click Analyse. All fields are optional — fill what you have.</div>
+  </div>
+
+  <div class="form-top">
+    <div class="form-field">
+      <label class="form-label">Category</label>
+      <input class="form-input" id="f-category" placeholder="e.g. Handheld Massagers">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Period</label>
+      <input class="form-input" id="f-period" placeholder="e.g. March 2026">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Analyst</label>
+      <input class="form-input" id="f-analyst" placeholder="Your name">
+    </div>
+  </div>
+
+  <!-- 1. POE -->
+  ${acc('poe','POE — Product Opportunity Explorer','src-poe',`
+    <div class="period-label">Fill Today → 90 days ago → 180 days ago</div>
+    <div class="field-grid grid-3">
+      <div class="field-group"><label>ASP — Today</label><input id="poe-asp-now" placeholder="$77.02"></div>
+      <div class="field-group"><label>ASP — 90d ago</label><input id="poe-asp-90" placeholder="$69.08"></div>
+      <div class="field-group"><label>ASP — 180d ago</label><input id="poe-asp-180" placeholder="$62.49"></div>
+    </div>
+    <div class="field-grid grid-3">
+      <div class="field-group"><label>Search Volume — Today</label><input id="poe-sv-now" placeholder="274,540"></div>
+      <div class="field-group"><label>Search Volume — 90d ago</label><input id="poe-sv-90" placeholder="438,902"></div>
+      <div class="field-group"><label>Search Volume — 180d ago</label><input id="poe-sv-180" placeholder="790,953"></div>
+    </div>
+    <div class="field-grid grid-3">
+      <div class="field-group"><label>Top 5 Products Click Share — Today</label><input id="poe-top5p-now" placeholder="41.34%"></div>
+      <div class="field-group"><label>Top 5 Products Click Share — 90d ago</label><input id="poe-top5p-90" placeholder="59.21%"></div>
+      <div class="field-group"><label>Top 5 Products Click Share — 180d ago</label><input id="poe-top5p-180" placeholder="77.32%"></div>
+    </div>
+    <div class="field-grid grid-3">
+      <div class="field-group"><label>Top 5 Brands Click Share — Today</label><input id="poe-top5b-now" placeholder="70.40%"></div>
+      <div class="field-group"><label>Top 5 Brands Click Share — 90d ago</label><input id="poe-top5b-90" placeholder="81.21%"></div>
+      <div class="field-group"><label>Top 5 Brands Click Share — 180d ago</label><input id="poe-top5b-180" placeholder="88.00%"></div>
+    </div>
+    <div class="field-grid grid-3">
+      <div class="field-group"><label>Total Product Count</label><input id="poe-products" placeholder="26"></div>
+      <div class="field-group"><label>Brand Count</label><input id="poe-brands" placeholder="15"></div>
+      <div class="field-group"><label>New Products (recent)</label><input id="poe-new" placeholder="8"></div>
+    </div>
+    <div class="field-group"><label>PM Observations</label><textarea class="form-input" id="poe-notes" placeholder="e.g. Search volume increased slightly YoY. ASP up $10 YoY. Top product click share decreased — market opening to competition."></textarea></div>
+  `)}
+
+  <!-- 2. Growth Opportunities -->
+  ${acc('growth','Growth Opportunities — Vendor Central','src-growth',`
+    <div class="field-grid grid-3">
+      <div class="field-group"><label>Search Volume (180d)</label><input id="go-sv" placeholder="38,737,582"></div>
+      <div class="field-group"><label>Search Growth % (90d)</label><input id="go-growth" placeholder="+36%"></div>
+      <div class="field-group"><label>Units Sold (180d)</label><input id="go-units" placeholder="2,000,000"></div>
+    </div>
+    <div class="field-grid grid-3">
+      <div class="field-group"><label>Customer Clicks (180d)</label><input id="go-clicks" placeholder="5,072,398"></div>
+      <div class="field-group"><label>Average Price</label><input id="go-asp" placeholder="$53"></div>
+      <div class="field-group"><label>Return Rate %</label><input id="go-returns" placeholder="6.10%"></div>
+    </div>
+    <div class="field-grid grid-2">
+      <div class="field-group"><label>Average Rating</label><input id="go-rating" placeholder="4.4"></div>
+      <div class="field-group"><label>Search Conversion Rate</label><input id="go-conv" placeholder="5.45%"></div>
+    </div>
+    <div class="field-group"><label>PM Observations</label><textarea class="form-input" id="go-notes" placeholder="e.g. Shows same increase as other data. High seasonality noted."></textarea></div>
+  `)}
+
+  <!-- 3. Marketplace Product Guidance -->
+  ${acc('marketplace','Marketplace Product Guidance','src-marketplace',`
+    <div class="field-group"><label>PM Observations</label><textarea class="form-input" id="mp-notes" placeholder="e.g. March trending lower than usual. Demand chart shows seasonal dip. No other signals from Amazon's guidance tool."></textarea></div>
+  `)}
+
+  <!-- 4. Google Trends -->
+  ${acc('google','Google Trends','src-google',`
+    <div class="field-grid grid-2">
+      <div class="field-group"><label>YoY Change %</label><input id="gt-yoy" placeholder="+23%"></div>
+      <div class="field-group"><label>Monthly Searches (past month)</label><input id="gt-monthly" placeholder="894K"></div>
+    </div>
+    <div class="field-group"><label>PM Observations</label><textarea class="form-input" id="gt-notes" placeholder="e.g. Google trends show the category is up 23% YoY. Clear seasonal spikes visible. Trajectory trending upward."></textarea></div>
+  `)}
+
+  <!-- 5. Datarova -->
+  ${acc('datarova','Datarova','src-datarova',`
+    <div class="period-label">This period vs same period last year</div>
+    <div class="field-grid grid-3" style="margin-bottom:4px">
+      <div></div><div class="field-group"><label>This Year</label></div><div class="field-group"><label>Last Year</label></div>
+    </div>
+    <div class="field-grid grid-3">
+      <div style="font-size:11px;color:var(--muted);padding-top:8px">Total Clicks</div>
+      <div class="field-group"><input id="dr-clicks-now" placeholder="274,369"></div>
+      <div class="field-group"><input id="dr-clicks-prev" placeholder="254,508"></div>
+    </div>
+    <div class="field-grid grid-3">
+      <div style="font-size:11px;color:var(--muted);padding-top:8px">Total Sales</div>
+      <div class="field-group"><input id="dr-sales-now" placeholder="58,078"></div>
+      <div class="field-group"><input id="dr-sales-prev" placeholder="54,942"></div>
+    </div>
+    <div class="field-grid grid-3">
+      <div style="font-size:11px;color:var(--muted);padding-top:8px">Conv. Rate</div>
+      <div class="field-group"><input id="dr-conv-now" placeholder="21.2%"></div>
+      <div class="field-group"><input id="dr-conv-prev" placeholder="21.6%"></div>
+    </div>
+    <div class="field-group" style="margin-top:10px"><label>PM Observations</label><textarea class="form-input" id="dr-notes" placeholder="e.g. Shows slight increase over same period last year. Conversion rate slightly down."></textarea></div>
+  `)}
+
+  <!-- 6. Smart Scout -->
+  ${acc('smartscout','Smart Scout — Brand Market Share','src-smartscout',`
+    <div class="brand-row-header">
+      <span>Brand</span><span>Market Share %</span><span>Share Change %</span><span>Ad Spend Share %</span>
+    </div>
+    ${[1,2,3,4,5].map(i=>`
+    <div class="brand-row">
+      <div class="field-group"><input id="ss-brand${i}" placeholder="Brand ${i}"></div>
+      <div class="field-group"><input id="ss-share${i}" placeholder="20.9%"></div>
+      <div class="field-group"><input id="ss-change${i}" placeholder="+0.9%"></div>
+      <div class="field-group"><input id="ss-adspend${i}" placeholder="16.6%"></div>
+    </div>`).join('')}
+    <div class="field-group" style="margin-top:10px"><label>PM Observations</label><textarea class="form-input" id="ss-notes" placeholder="e.g. High brand dominance. TheraGun leads at 20.9%. High advertising spend from top brands indicates competitive moat."></textarea></div>
+  `)}
+
+  <!-- 7. DataDive -->
+  ${acc('datadive','DataDive','src-datadive',`
+    <div class="field-group"><label>PM Observations</label><textarea class="form-input" id="dd-notes" placeholder="e.g. SV is increasing on both Google and Amazon trends. Lifepro is way off in terms of revenue vs top competitors. Amazon SV trendline turning upward."></textarea></div>
+  `)}
+
+  <div class="submit-row">
+    <button class="analyse-btn" id="analyse-btn" onclick="runAnalysis()">Analyse →</button>
+  </div>
+</div>`;
+}
+
+function acc(id, title, srcCls, body) {
+  return `
+<div class="accordion" id="acc-${id}">
+  <div class="acc-header" onclick="toggleAcc('${id}')">
+    <span class="acc-source ${srcCls}">${title.split('—')[0].trim()}</span>
+    <span class="acc-title">${title}</span>
+    <span class="acc-chevron">▼</span>
+  </div>
+  <div class="acc-body" id="acc-body-${id}">${body}</div>
+</div>`;
+}
+
+function toggleAcc(id) {
+  const header = document.querySelector(`#acc-${id} .acc-header`);
+  const body = document.getElementById(`acc-body-${id}`);
+  const isOpen = body.classList.toggle('open');
+  header.classList.toggle('open', isOpen);
+}
+
+/* ── ANALYSIS ────────────────────────────────────────────────────── */
+function buildSystemPrompt() {
+  return `You are a category analysis expert for Lifepro, a 1P fitness equipment brand selling on Amazon USA.
+
+A Product Manager has gathered data from multiple market intelligence sources for an Amazon product category. Your job is to synthesise all the data into a structured market analysis matching Lifepro's standard framework.
+
+KEY QUESTIONS TO ANSWER:
+1. Is the market trending UP, DOWN, or FLAT? (synthesise all signals)
+2. Is ASP (average selling price) going UP, DOWN, or FLAT?
+3. Is competition getting HARDER, EASIER, or STABLE? (look at top brand/product click share concentration and new entrants)
+4. How HIGH/MEDIUM/LOW is the rate of new entrants?
+
+ANALYSIS FRAMEWORK:
+- Market Performance: Revenue, search volume, units sold, ASP, return rate trends
+- Seasonal Patterns: Seasonal signals across all sources, peak periods, current month vs normal
+- Market Structure: Brand dominance, top brand concentration, ad spend intensity, market maturity
+- Product & Search Dynamics: Click share fragmentation/concentration, SFR trends, new product activity
+- Strategic Considerations: Specific opportunities, challenges, and risks for Lifepro
+
+OUTPUT: Return ONLY a valid JSON object with no markdown fences:
+{
+  "market_trend": "up" | "down" | "flat",
+  "asp_trend": "up" | "down" | "flat",
+  "competition_trend": "harder" | "easier" | "stable",
+  "new_entrants": "high" | "medium" | "low",
+  "confidence": "high" | "medium" | "low",
+  "sections": {
+    "market_performance": "<2-3 sentences>",
+    "seasonal_patterns": "<2-3 sentences>",
+    "market_structure": "<2-3 sentences>",
+    "product_search_dynamics": "<2-3 sentences>",
+    "strategic_considerations": {
+      "opportunities": ["<specific opportunity>"],
+      "challenges": ["<specific challenge>"],
+      "risks": ["<specific risk>"]
+    }
+  },
+  "verdict": "<1-2 sentence executive summary for a business leader>",
+  "signal_alignment": "<1 sentence: do sources agree or conflict?>"
+}`;
+}
+
+function buildPrompt() {
+  const cat   = v('f-category') || 'Unknown category';
+  const period = v('f-period') || 'This period';
+
+  const poe = {
+    asp: { now: v('poe-asp-now'), d90: v('poe-asp-90'), d180: v('poe-asp-180') },
+    sv:  { now: v('poe-sv-now'),  d90: v('poe-sv-90'),  d180: v('poe-sv-180')  },
+    top5products: { now: v('poe-top5p-now'), d90: v('poe-top5p-90'), d180: v('poe-top5p-180') },
+    top5brands:   { now: v('poe-top5b-now'), d90: v('poe-top5b-90'), d180: v('poe-top5b-180') },
+    productCount: v('poe-products'), brandCount: v('poe-brands'), newProducts: v('poe-new'),
+    notes: v('poe-notes')
+  };
+
+  const growth = {
+    searchVolume: v('go-sv'), searchGrowthPct: v('go-growth'), unitsSold: v('go-units'),
+    customerClicks: v('go-clicks'), avgPrice: v('go-asp'), returnRate: v('go-returns'),
+    avgRating: v('go-rating'), convRate: v('go-conv'), notes: v('go-notes')
+  };
+
+  const brands = [1,2,3,4,5].map(i => ({
+    name: v(`ss-brand${i}`), share: v(`ss-share${i}`),
+    shareChange: v(`ss-change${i}`), adSpend: v(`ss-adspend${i}`)
+  })).filter(b => b.name);
+
+  return `Analyse the ${cat} category for ${period}.
+
+PRODUCT OPPORTUNITY EXPLORER (POE):
+${JSON.stringify(poe, null, 2)}
+
+GROWTH OPPORTUNITIES (Vendor Central):
+${JSON.stringify(growth, null, 2)}
+
+MARKETPLACE PRODUCT GUIDANCE:
+PM Notes: ${v('mp-notes') || 'Not provided'}
+
+GOOGLE TRENDS:
+YoY Change: ${v('gt-yoy') || 'Not provided'}
+Monthly searches: ${v('gt-monthly') || 'Not provided'}
+PM Notes: ${v('gt-notes') || 'Not provided'}
+
+DATAROVA (YoY comparison):
+Clicks this year/last year: ${v('dr-clicks-now')} / ${v('dr-clicks-prev')}
+Sales this year/last year: ${v('dr-sales-now')} / ${v('dr-sales-prev')}
+Conv rate this year/last year: ${v('dr-conv-now')} / ${v('dr-conv-prev')}
+PM Notes: ${v('dr-notes') || 'Not provided'}
+
+SMART SCOUT (top brands):
+${brands.length ? JSON.stringify(brands, null, 2) : 'Not provided'}
+PM Notes: ${v('ss-notes') || 'Not provided'}
+
+DATADIVE:
+PM Notes: ${v('dd-notes') || 'Not provided'}
+
+Return the JSON analysis.`;
+}
+
+function v(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+async function runAnalysis() {
+  const btn = document.getElementById('analyse-btn');
+  const main = document.getElementById('main');
+
+  const category  = v('f-category');
+  const period    = v('f-period');
+  const analyst   = v('f-analyst');
+
+  if (!category) { alert('Please enter a category name.'); return; }
+
+  const rawInputs = gatherRawInputs();
+
+  btn.disabled = true;
+  const formHtml = main.innerHTML;
+  main.innerHTML = `<div class="loading-overlay active"><div class="spinner"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="loading-text" id="loading-text">Synthesising data across 7 sources...</div></div>`;
+
+  const steps = ['Reading market signals...','Comparing source alignment...','Assessing competition dynamics...','Building strategic analysis...'];
+  let step = 0;
+  const interval = setInterval(() => {
+    const el = document.getElementById('loading-text');
+    if (el) el.textContent = steps[Math.min(step++, steps.length-1)];
+  }, 3000);
+
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system: buildSystemPrompt(),
+        messages: [{role:'user', content: buildPrompt()}]
+      })
+    });
+
+    const data = await resp.json();
+    clearInterval(interval);
+
+    const textBlock = data.content?.find(b => b.type === 'text');
+    if (!textBlock) throw new Error('No response from Claude');
+
+    let parsed;
+    try {
+      const clean = textBlock.text.replace(/```json\n?|\n?```/g,'').trim();
+      parsed = JSON.parse(clean);
+    } catch(e) {
+      throw new Error('Could not parse Claude response as JSON');
+    }
+
+    // Save to Supabase
+    try {
+      await fetch('/api/analyses?action=save', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          category, period, analyst,
+          raw_inputs: rawInputs,
+          analysis: parsed,
+          market_trend: parsed.market_trend,
+          asp_trend: parsed.asp_trend,
+          competition_trend: parsed.competition_trend,
+          new_entrants: parsed.new_entrants
+        })
+      });
+    } catch(e) {
+      console.warn('Could not save to Supabase:', e);
+    }
+
+    renderReport(parsed, category, period, analyst, new Date().toISOString());
+    loadSidebar();
+
+  } catch(err) {
+    clearInterval(interval);
+    main.innerHTML = formHtml;
+    document.getElementById('analyse-btn').disabled = false;
+    alert('Analysis failed: ' + err.message);
+  }
+}
+
+function gatherRawInputs() {
+  const ids = ['f-category','f-period','f-analyst',
+    'poe-asp-now','poe-asp-90','poe-asp-180','poe-sv-now','poe-sv-90','poe-sv-180',
+    'poe-top5p-now','poe-top5p-90','poe-top5p-180','poe-top5b-now','poe-top5b-90','poe-top5b-180',
+    'poe-products','poe-brands','poe-new','poe-notes',
+    'go-sv','go-growth','go-units','go-clicks','go-asp','go-returns','go-rating','go-conv','go-notes',
+    'mp-notes','gt-yoy','gt-monthly','gt-notes',
+    'dr-clicks-now','dr-clicks-prev','dr-sales-now','dr-sales-prev','dr-conv-now','dr-conv-prev','dr-notes',
+    'ss-notes','dd-notes'
+  ];
+  const result = {};
+  ids.forEach(id => { result[id] = v(id); });
+  [1,2,3,4,5].forEach(i => {
+    ['brand','share','change','adspend'].forEach(f => {
+      result[`ss-${f}${i}`] = v(`ss-${f}${i}`);
+    });
+  });
+  return result;
+}
+
+/* ── REPORT RENDER ───────────────────────────────────────────────── */
+function renderReport(a, category, period, analyst, createdAt) {
+  const main = document.getElementById('main');
+  const date = createdAt ? new Date(createdAt).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '';
+
+  const signalPills = [
+    sigPill('Market', a.market_trend, {up:'sp-up',down:'sp-down',flat:'sp-flat'}, {up:'↑ Up',down:'↓ Down',flat:'→ Flat'}),
+    sigPill('ASP', a.asp_trend, {up:'sp-up',down:'sp-down',flat:'sp-flat'}, {up:'↑ Rising',down:'↓ Falling',flat:'→ Flat'}),
+    sigPill('Competition', a.competition_trend, {harder:'sp-harder',easier:'sp-easier',stable:'sp-flat'}, {harder:'↑ Harder',easier:'↓ Easier',stable:'→ Stable'}),
+    sigPill('New Entrants', a.new_entrants, {high:'sp-high',medium:'sp-medium',low:'sp-low'}, {high:'High',medium:'Medium',low:'Low'}),
+  ].join('');
+
+  const sc = a.sections?.strategic_considerations || {};
+  const opp  = (sc.opportunities||[]).map(x=>`<li>${x}</li>`).join('');
+  const chal = (sc.challenges||[]).map(x=>`<li>${x}</li>`).join('');
+  const risk = (sc.risks||[]).map(x=>`<li>${x}</li>`).join('');
+
+  main.innerHTML = `
+<div style="max-width:780px">
+  <div class="report-header">
+    <div class="report-title">${category || 'Category'} Analysis</div>
+    <div class="report-subtitle">${period || ''} · ${analyst || ''} · ${date}</div>
+    <div class="signal-bar">${signalPills}</div>
+  </div>
+
+  <div class="verdict-box">
+    <div class="verdict-label">Executive Summary</div>
+    ${a.verdict || ''}
+  </div>
+
+  <div class="report-section">
+    <div class="rs-title">Market Performance</div>
+    <div class="rs-body">${a.sections?.market_performance || ''}</div>
+  </div>
+
+  <div class="report-section">
+    <div class="rs-title">Seasonal Patterns</div>
+    <div class="rs-body">${a.sections?.seasonal_patterns || ''}</div>
+  </div>
+
+  <div class="report-section">
+    <div class="rs-title">Market Structure & Competition</div>
+    <div class="rs-body">${a.sections?.market_structure || ''}</div>
+  </div>
+
+  <div class="report-section">
+    <div class="rs-title">Product & Search Dynamics</div>
+    <div class="rs-body">${a.sections?.product_search_dynamics || ''}</div>
+  </div>
+
+  <div class="report-section">
+    <div class="rs-title">Strategic Considerations</div>
+    <div class="strat-grid">
+      <div class="strat-col opp"><div class="strat-col-title">Opportunities</div><ul class="rs-list opp">${opp}</ul></div>
+      <div class="strat-col chal"><div class="strat-col-title">Challenges</div><ul class="rs-list chal">${chal}</ul></div>
+      <div class="strat-col risk"><div class="strat-col-title">Risks</div><ul class="rs-list risk">${risk}</ul></div>
+    </div>
+    ${a.signal_alignment ? `<div class="signal-note">Signal alignment: ${a.signal_alignment}</div>` : ''}
+  </div>
+
+  <div style="margin-top:16px">
+    <button onclick="showForm()" style="padding:6px 14px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;cursor:pointer">+ New Analysis</button>
+  </div>
+</div>`;
+}
+
+function sigPill(label, val, clsMap, labelMap) {
+  if (!val) return '';
+  const cls = clsMap[val] || 'sp-flat';
+  const text = labelMap[val] || val;
+  return `<span class="signal-pill ${cls}"><span class="signal-label">${label}</span>${text}</span>`;
+}
+
+/* ── INIT ────────────────────────────────────────────────────────── */
+loadSidebar();
+</script>
+</body>
+</html>

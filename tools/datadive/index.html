@@ -100,8 +100,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API_KEY = 'eu6bEMbBhF6N600rjpIJ03RItjRoQxPS84TZ257G';
-const BASE = 'https://api.datadive.tools/v1';
+const BASE = '/api/datadive';
 
 const CATEGORIES = [
   { id: 'vibration', label: 'Vibration Plates', color: '#7c3aed', keywords: ['vibration plate', 'vibration platform', 'rumblex', 'waver'] },
@@ -121,7 +120,7 @@ let nicheDetails = {};
 let activeTab = 'keywords';
 
 async function api(path) {
-  const r = await fetch(`${BASE}${path}`, { headers: { 'x-api-key': API_KEY } });
+  const r = await fetch(`${BASE}?p=${encodeURIComponent(path)}`);
   if (!r.ok) throw new Error(`${r.status}`);
   return r.json();
 }
