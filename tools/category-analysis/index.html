@@ -53,7 +53,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* MAIN */
 .main{flex:1;overflow-y:auto;padding:32px;display:flex;flex-direction:column;align-items:center}
 
-/* HOME STATE */
+/* HOME */
 .home-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:40px;max-width:520px;width:100%;text-align:center;margin:auto}
 .home-icon{font-size:32px;margin-bottom:16px}
 .home-title{font-size:20px;font-weight:700;margin-bottom:8px}
@@ -83,7 +83,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .loading-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;margin:auto}
 .loading-label{font-size:12px;color:var(--muted)}
 
-/* COLLECTING STATE */
+/* COLLECTING */
 .collect-wrap{max-width:720px;width:100%}
 .collect-header{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 20px;display:flex;align-items:center;gap:20px;margin-bottom:20px;flex-wrap:wrap}
 .collect-cat{font-size:15px;font-weight:700}
@@ -92,39 +92,58 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .source-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
 .source-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color 0.2s}
 .source-card.ready{border-color:var(--green)}
-.source-card.error{border-color:var(--red)}
 .sc-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
 .sc-icon{font-size:16px;flex-shrink:0}
-.sc-name{font-size:12px;font-weight:600;flex:1}
-.sc-badge{font-size:9px;font-weight:600;padding:2px 8px;border-radius:10px;letter-spacing:0.04em;text-transform:uppercase}
-.badge-auto{background:var(--blue-dim);color:var(--blue-light)}
+.sc-name{font-size:12px;font-weight:600}
+.sc-badge{font-size:9px;font-weight:600;padding:2px 8px;border-radius:10px;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap}
 .badge-screenshot{background:var(--surface2);color:var(--muted)}
 .badge-ready{background:var(--green-dim);color:var(--green-light)}
-.sc-status{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.guide-btn{margin-left:auto;padding:3px 9px;border-radius:4px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:10px;cursor:pointer;transition:all 0.15s;white-space:nowrap;flex-shrink:0}
+.guide-btn:hover,.guide-btn.open{border-color:var(--blue-light);color:var(--blue-light);background:var(--blue-dim)}
+.sc-guide{display:none;padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.7}
+.sc-guide ol{padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.sc-guide li{color:var(--muted)}
+.sc-guide strong{color:var(--text)}
+.sc-guide a{color:var(--blue-light);text-decoration:none}
+.sc-guide a:hover{text-decoration:underline}
+.sc-guide p{margin-bottom:6px}
 .sc-body{padding:12px 16px}
-.sc-instruction{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6}
+.sc-instruction{font-size:12px;color:var(--muted);margin-bottom:10px}
 .sc-instruction strong{color:var(--text)}
-.sc-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sc-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .open-btn{padding:6px 12px;border-radius:6px;background:transparent;border:1px solid var(--border2);color:var(--blue-light);font-size:11px;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s}
 .open-btn:hover{border-color:var(--blue-light);background:var(--blue-dim)}
 .upload-label{padding:6px 12px;border-radius:6px;background:var(--purple-dim);border:1px solid var(--purple-light);color:var(--purple-light);font-size:11px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s}
 .upload-label:hover{background:var(--purple-light);color:#fff}
 .upload-input{display:none}
-.sc-preview{display:none;margin-top:10px}
-.sc-preview img{max-width:100%;max-height:180px;border-radius:6px;border:1px solid var(--border2);object-fit:cover}
-.sc-ready-label{font-size:11px;color:var(--green-light);font-weight:600;display:flex;align-items:center;gap:5px}
-.dd-result{background:var(--surface2);border-radius:6px;padding:10px 12px;margin-top:4px}
-.dd-niche{font-size:12px;font-weight:600;margin-bottom:4px}
-.dd-stats{display:flex;gap:16px;flex-wrap:wrap}
-.dd-stat{font-size:11px;color:var(--muted)}
-.dd-stat span{color:var(--text);font-weight:600;font-family:var(--mono)}
-.dd-keywords{margin-top:8px}
-.dd-kw-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
-.dd-kw-list{display:flex;flex-wrap:wrap;gap:4px}
-.dd-kw-chip{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--surface3);color:var(--muted2);font-family:var(--mono)}
-.dd-kw-chip.top{background:var(--blue-dim);color:var(--blue-light)}
+.drop-zone{border:1.5px dashed var(--border2);border-radius:6px;padding:10px;text-align:center;font-size:11px;color:var(--muted);transition:all 0.15s;cursor:pointer;margin-bottom:8px}
+.drop-zone.drag-over{border-color:var(--purple-light);background:var(--purple-dim);color:var(--purple-light)}
 
-/* SYNTHESISE BUTTON */
+/* THUMBNAILS */
+.thumb-gallery{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;align-items:flex-start}
+.thumb-item{position:relative}
+.thumb-img{width:90px;height:68px;object-fit:cover;border-radius:6px;border:1px solid var(--border2);display:block}
+.thumb-remove{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:3px;font-size:9px;padding:2px 5px;cursor:pointer;line-height:1}
+.thumb-remove:hover{background:var(--red)}
+.thumb-add{display:flex;align-items:center;justify-content:center;width:90px;height:68px;border:1.5px dashed var(--border2);border-radius:6px;font-size:11px;color:var(--muted);cursor:pointer;transition:all 0.15s}
+.thumb-add:hover{border-color:var(--purple-light);color:var(--purple-light)}
+.sc-ready-label{font-size:11px;color:var(--green-light);font-weight:600;display:flex;align-items:center;gap:5px}
+
+/* POE TABS */
+.poe-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--border)}
+.poe-tab{padding:6px 14px;font-size:11px;font-weight:600;background:transparent;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s}
+.poe-tab:hover{color:var(--text)}
+.poe-tab.active{color:var(--purple-light);border-bottom-color:var(--purple-light)}
+
+/* JSON INPUT */
+.json-drop-zone{position:relative}
+.json-drop-zone.drag-over .json-input{border-color:var(--purple-light);background:var(--purple-dim)}
+.json-drop-zone-hint{font-size:10px;color:var(--muted);margin-top:5px}
+.json-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;resize:vertical;min-height:80px;transition:border-color 0.15s;display:block}
+.json-input:focus{border-color:var(--purple-light)}
+.json-input::placeholder{color:var(--muted)}
+
+/* SYNTH BAR */
 .synth-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .synth-status{font-size:12px;color:var(--muted)}
 .synth-status strong{color:var(--text)}
@@ -132,7 +151,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .synth-btn:hover{background:#7c3aed}
 .synth-btn:disabled{opacity:0.35;cursor:default}
 
-/* SYNTHESISING STATE */
+/* SYNTHESISING */
 .synth-loading{display:flex;flex-direction:column;align-items:center;gap:16px;margin:auto;text-align:center}
 .synth-steps{display:flex;flex-direction:column;gap:6px;min-width:280px;margin-top:8px}
 .synth-step{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);padding:6px 10px;border-radius:6px}
@@ -144,7 +163,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* REPORT */
 .report-wrap{max-width:720px;width:100%}
-.report-header{margin-bottom:24px}
 .report-title{font-size:22px;font-weight:800;margin-bottom:4px}
 .report-meta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:16px}
 .signal-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
@@ -158,11 +176,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .sig-high{background:var(--amber-dim);color:var(--amber-light);border:1px solid rgba(193,127,36,0.3)}
 .sig-medium{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
 .sig-low{background:var(--green-dim);color:var(--green-light);border:1px solid rgba(26,122,74,0.3)}
-.verdict-box{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--purple-light);border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px;font-size:13px;line-height:1.7;color:var(--text)}
+.verdict-box{background:var(--surface);border:1px solid var(--border2);border-left:3px solid var(--purple-light);border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px;font-size:13px;line-height:1.7}
 .verdict-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--purple-light);margin-bottom:6px}
 .section-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:12px}
 .section-card-title{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--purple-light);margin-bottom:10px}
-.section-card-body{font-size:13px;line-height:1.7;color:var(--text)}
+.section-card-body{font-size:13px;line-height:1.7}
 .strategic-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
 @media(max-width:640px){.strategic-grid{grid-template-columns:1fr}}
 .strat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
@@ -180,21 +198,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .report-actions{display:flex;gap:10px;margin-top:20px}
 .btn-ghost{padding:7px 16px;border-radius:6px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.15s}
 .btn-ghost:hover{border-color:var(--text);color:var(--text)}
-
-/* DRAG & DROP */
-.drop-zone{margin-top:10px;border:1.5px dashed var(--border2);border-radius:6px;padding:12px;text-align:center;font-size:11px;color:var(--muted);transition:all 0.15s;cursor:pointer}
-.drop-zone.drag-over{border-color:var(--purple-light);background:var(--purple-dim);color:var(--purple-light)}
-
-/* POE TABS */
-.poe-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--border)}
-.poe-tab{padding:6px 14px;font-size:11px;font-weight:600;background:transparent;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;letter-spacing:0.03em}
-.poe-tab:hover{color:var(--text)}
-.poe-tab.active{color:var(--purple-light);border-bottom-color:var(--purple-light)}
-
-/* JSON INPUT */
-.json-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;resize:vertical;min-height:90px;transition:border-color 0.15s}
-.json-input:focus{border-color:var(--purple-light)}
-.json-input::placeholder{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -222,9 +225,53 @@ let confirmedCategory = '';
 let searchKeyword = '';
 let analyst = '';
 let period = '';
-let screenshots = {}; // { sourceId: { base64, mimeType } }
-let jsonInputs = {};  // { sourceId: jsonString } — for POE JSON paste
+let screenshots = {}; // { sourceId: [{base64, mimeType}] }
+let jsonInputs = {};  // { sourceId: jsonString }
 let currentAnalysisId = null;
+
+// ─── How-to guides per source ─────────────────────────────────────────────────
+const GUIDES = {
+  trends: `<p>The link above pre-fills your keyword, United States, and 12 months.</p>
+    <ol>
+      <li>Click <strong>Open Google Trends ↗</strong>.</li>
+      <li>Wait for the chart to load fully.</li>
+      <li>Take a full screenshot showing the trend line.</li>
+      <li>Optional: add a second screenshot with a 5-year view for longer-term context.</li>
+    </ol>`,
+  poe: `<ol>
+    <li>Install the <a href="https://chromewebstore.google.com/detail/opportunity-explorer-insi/bahjpahpadcebglglpfbgomiigjlcgam" target="_blank">Opportunity Explorer Insights extension ↗</a> in Chrome if not already.</li>
+    <li>Log into Vendor Central → <strong>Analytics → Product Opportunity Explorer</strong>.</li>
+    <li>Search for your keyword and wait for results to load.</li>
+    <li>The extension adds an Insights panel on the right side — screenshot the full page with this panel visible.</li>
+    <li><strong>Better option:</strong> if the extension has a JSON export button, click it and paste the JSON in the <em>Paste JSON</em> tab — Claude reads exact numbers instead of estimating from a screenshot.</li>
+  </ol>`,
+  smartscout: `<ol>
+    <li>Log into <a href="https://www.smartscout.com" target="_blank">Smart Scout ↗</a>.</li>
+    <li>Search for your keyword.</li>
+    <li>Go to <strong>Brand Market Share</strong> view.</li>
+    <li>Screenshot showing: top brands, market share %, share change %, and ad spend share %.</li>
+    <li>Add a second screenshot if you need to capture more brands.</li>
+  </ol>`,
+  datarova: `<ol>
+    <li>Log into <a href="https://www.datarova.com" target="_blank">Datarova ↗</a>.</li>
+    <li>Click the <strong>Trends</strong> tab.</li>
+    <li>Search for your keyword.</li>
+    <li>Set the comparison to <strong>current period vs. same period last year</strong>.</li>
+    <li>Screenshot the full comparison table (clicks, sales, conversion rate).</li>
+  </ol>`,
+  growth: `<ol>
+    <li>Log into Vendor Central.</li>
+    <li>Go to <strong>Analytics → Growth Opportunities</strong>.</li>
+    <li>Search for your keyword.</li>
+    <li>Screenshot showing: Search Volume, Growth %, Units Sold, Customer Clicks, Average Price, Average Rating, Return Rate.</li>
+  </ol>`,
+  mpg: `<ol>
+    <li>Log into Vendor Central.</li>
+    <li>Go to <strong>Selling Coach → Marketplace Product Guidance</strong>.</li>
+    <li>Find your category keyword.</li>
+    <li>Screenshot the demand chart and sales opportunity section.</li>
+  </ol>`,
+};
 
 // ─── Source definitions ───────────────────────────────────────────────────────
 const SOURCES = [
@@ -232,7 +279,7 @@ const SOURCES = [
     id: 'trends',
     name: 'Google Trends',
     icon: '📈',
-    instruction: kw => `Open the link below. Set to <strong>United States · Past 12 months</strong>. Screenshot the full chart.`,
+    instruction: kw => `US · 12 months · trend for "${kw}"`,
     url: kw => `https://trends.google.com/trends/explore?q=${encodeURIComponent(kw)}&geo=US&date=today%2012-m`,
     urlLabel: 'Open Google Trends ↗',
   },
@@ -240,7 +287,7 @@ const SOURCES = [
     id: 'poe',
     name: 'Product Opportunity Explorer',
     icon: '🔍',
-    instruction: kw => `Use the <strong>Opportunity Explorer Insights</strong> Chrome extension — it adds structured data directly to the POE page. In Vendor Central go to <strong>Analytics → Product Opportunity Explorer</strong>, search <strong>"${kw}"</strong>, and either screenshot the extension panel <em>or</em> copy its JSON export and paste below.`,
+    instruction: () => `Amazon Vendor Central + Opportunity Explorer Insights extension`,
     url: () => `https://vendorcentral.amazon.com`,
     urlLabel: 'Open Vendor Central ↗',
     jsonSupport: true,
@@ -249,7 +296,7 @@ const SOURCES = [
     id: 'smartscout',
     name: 'Smart Scout',
     icon: '🏆',
-    instruction: kw => `Log into Smart Scout. Search for <strong>"${kw}"</strong>. Navigate to <strong>Brand Market Share</strong>. Screenshot showing top brands and their market share %.`,
+    instruction: kw => `Brand market share for "${kw}"`,
     url: () => `https://www.smartscout.com`,
     urlLabel: 'Open Smart Scout ↗',
   },
@@ -257,7 +304,7 @@ const SOURCES = [
     id: 'datarova',
     name: 'Datarova',
     icon: '📊',
-    instruction: kw => `Go to Datarova. Open the <strong>Trends</strong> tab and search for <strong>"${kw}"</strong>. Screenshot showing this year vs last year comparison (clicks, sales, conv rate).`,
+    instruction: kw => `Trends tab · YoY comparison for "${kw}"`,
     url: () => `https://www.datarova.com`,
     urlLabel: 'Open Datarova ↗',
   },
@@ -265,7 +312,7 @@ const SOURCES = [
     id: 'growth',
     name: 'Growth Opportunities',
     icon: '📦',
-    instruction: kw => `In Vendor Central go to <strong>Analytics → Growth Opportunities</strong>. Search for <strong>"${kw}"</strong>. Screenshot showing search volume, units sold, avg price, avg rating, return rate.`,
+    instruction: kw => `Vendor Central · Analytics → Growth Opportunities for "${kw}"`,
     url: () => `https://vendorcentral.amazon.com`,
     urlLabel: 'Open Vendor Central ↗',
   },
@@ -273,7 +320,7 @@ const SOURCES = [
     id: 'mpg',
     name: 'Marketplace Product Guidance',
     icon: '🗺️',
-    instruction: kw => `In Vendor Central go to <strong>Selling Coach → Marketplace Product Guidance</strong>. Find <strong>"${kw}"</strong>. Screenshot the demand and sales opportunity charts.`,
+    instruction: kw => `Vendor Central · Selling Coach → Marketplace Product Guidance for "${kw}"`,
     url: () => `https://vendorcentral.amazon.com`,
     urlLabel: 'Open Vendor Central ↗',
   },
@@ -317,9 +364,8 @@ function compBadge(val) {
 
 async function loadAnalysis(id) {
   currentAnalysisId = id;
-  document.querySelectorAll('.analysis-item').forEach(el => {
-    el.classList.toggle('active', el.getAttribute('onclick')?.includes(id));
-  });
+  document.querySelectorAll('.analysis-item').forEach(el =>
+    el.classList.toggle('active', el.getAttribute('onclick')?.includes(id)));
   setMain(`<div class="loading-wrap"><div class="spinner"></div><div class="loading-label">Loading analysis...</div></div>`);
   try {
     const r = await fetch(`/api/analyses?action=get&id=${id}`);
@@ -331,10 +377,8 @@ async function loadAnalysis(id) {
   }
 }
 
-// ─── Navigation helpers ───────────────────────────────────────────────────────
-function setMain(html) {
-  document.getElementById('main').innerHTML = html;
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function setMain(html) { document.getElementById('main').innerHTML = html; }
 
 function goHome() {
   appState = 'home';
@@ -343,15 +387,14 @@ function goHome() {
   renderHome();
 }
 
-// ─── HOME STATE ───────────────────────────────────────────────────────────────
+// ─── HOME ─────────────────────────────────────────────────────────────────────
 function renderHome() {
-  const now = new Date();
-  const defaultPeriod = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const defaultPeriod = new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' });
   setMain(`
     <div class="home-card">
       <div class="home-icon">📊</div>
       <div class="home-title">New Category Analysis</div>
-      <div class="home-sub">Enter the product category, then collect data from 6 sources.<br>Screenshot or paste JSON from each source — no manual number entry.</div>
+      <div class="home-sub">Enter the product category, then collect data from 6 sources.<br>Screenshot or paste JSON — no manual number entry.</div>
       <div class="home-form">
         <div>
           <div class="field-label">Product Category</div>
@@ -378,7 +421,8 @@ function renderHome() {
 async function startAnalysis() {
   const cat = document.getElementById('inp-category')?.value?.trim();
   analyst = document.getElementById('inp-analyst')?.value?.trim() || 'PM';
-  period = document.getElementById('inp-period')?.value?.trim() || new Date().toLocaleString('en-US',{month:'long',year:'numeric'});
+  period = document.getElementById('inp-period')?.value?.trim() ||
+    new Date().toLocaleString('en-US', { month:'long', year:'numeric' });
   if (!cat) return;
 
   appState = 'disambiguating';
@@ -391,17 +435,13 @@ async function startAnalysis() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 400,
-        system: `You are a category disambiguation assistant for a health & wellness 1P Amazon brand (Lifepro). Your only job is to determine if a product term is specific enough to identify a single Amazon category, or if it's ambiguous. Be strict — "massage gun" is fine, but "sauna" or "massager" or "bike" are ambiguous. Return ONLY valid JSON with no markdown.`,
-        messages: [{
-          role: 'user',
-          content: `The PM typed: "${cat}"\n\nReturn JSON: {"ambiguous": boolean, "confirmed": "exact category label or null", "keyword": "search keyword for DataDive/trends or null", "options": [{"label": "Display name", "keyword": "search term"}] or null}\n\nIf not ambiguous: confirmed = exact category name, keyword = best search term, options = null\nIf ambiguous: confirmed = null, keyword = null, options = array of 2-5 specific sub-categories`
-        }]
+        system: `You are a category disambiguation assistant for a health & wellness 1P Amazon brand (Lifepro). Determine if a product term is specific enough to identify a single Amazon category or if it is ambiguous. Be strict — "massage gun" is fine, but "sauna", "massager", "bike", "light therapy" are ambiguous. Return ONLY valid JSON, no markdown.`,
+        messages: [{ role: 'user', content: `The PM typed: "${cat}"\n\nReturn JSON: {"ambiguous": boolean, "confirmed": "exact category label or null", "keyword": "search keyword or null", "options": [{"label": "Display name", "keyword": "search term"}] or null}\n\nIf not ambiguous: confirmed = exact name, keyword = best search term, options = null\nIf ambiguous: confirmed = null, keyword = null, options = array of 2-5 specific sub-categories` }]
       })
     });
     const data = await r.json();
     const text = data.content?.[0]?.text || '{}';
-    const json = JSON.parse(text.replace(/```json\n?|\n?```/g,'').trim());
-
+    const json = extractJSON(text);
     if (!json.ambiguous) {
       confirmedCategory = json.confirmed || cat;
       searchKeyword = json.keyword || cat;
@@ -410,7 +450,6 @@ async function startAnalysis() {
       renderChoosing(cat, json.options || []);
     }
   } catch(e) {
-    // If disambiguation fails, just proceed with the raw input
     confirmedCategory = cat;
     searchKeyword = cat;
     renderCollecting();
@@ -422,7 +461,7 @@ function renderChoosing(rawInput, options) {
   setMain(`
     <div class="disambig-wrap">
       <div class="step-title">Which category do you mean?</div>
-      <div class="step-sub">"${rawInput}" could refer to several distinct categories. Select the one you want to analyse:</div>
+      <div class="step-sub">"${rawInput}" could refer to several distinct categories. Select the one to analyse:</div>
       <div class="disambig-options">
         ${options.map(o => `
           <div class="option-card" onclick="selectOption('${o.label.replace(/'/g,"\\'")}','${o.keyword.replace(/'/g,"\\'")}')">
@@ -442,11 +481,70 @@ function selectOption(label, keyword) {
   renderCollecting();
 }
 
-// ─── COLLECTING STATE ─────────────────────────────────────────────────────────
-function renderCollecting() {
+// ─── COLLECTING ───────────────────────────────────────────────────────────────
+function renderCollecting(resetData = true) {
   appState = 'collecting';
-  screenshots = {};
-  jsonInputs = {};
+  if (resetData) { screenshots = {}; jsonInputs = {}; }
+
+  function cardHtml(src) {
+    const isPOE = src.id === 'poe';
+    const url = src.url(searchKeyword);
+    return `
+      <div class="source-card" id="sc-${src.id}">
+        <div class="sc-header">
+          <div class="sc-icon">${src.icon}</div>
+          <div class="sc-name">${src.name}</div>
+          <div class="sc-badge badge-screenshot" id="badge-${src.id}">${isPOE ? 'Screenshot / JSON' : 'Screenshot'}</div>
+          <button class="guide-btn" id="guidebtn-${src.id}" onclick="toggleGuide('${src.id}')">ⓘ How to</button>
+        </div>
+        <div class="sc-guide" id="guide-${src.id}">${GUIDES[src.id] || ''}</div>
+        <div class="sc-body">
+          <div class="sc-instruction">${src.instruction(confirmedCategory)}</div>
+          ${isPOE ? `
+          <div class="poe-tabs">
+            <button class="poe-tab active" id="poetab-screenshot" onclick="switchPOETab('screenshot')">Screenshot</button>
+            <button class="poe-tab" id="poetab-json" onclick="switchPOETab('json')">Paste JSON</button>
+          </div>
+          <div id="poe-screenshot-panel">
+            <div class="sc-actions">
+              <a class="open-btn" href="${url}" target="_blank">${src.urlLabel}</a>
+              <label class="upload-label" for="file-${src.id}">
+                ↑ Add screenshots
+                <input type="file" id="file-${src.id}" class="upload-input" accept="image/*" multiple onchange="handleScreenshot('${src.id}',this)">
+              </label>
+            </div>
+            <div class="drop-zone" id="drop-${src.id}"
+              ondragover="onDragOver(event,'${src.id}')" ondragleave="onDragLeave('${src.id}')" ondrop="onDropImage(event,'${src.id}')">
+              Drop screenshots here
+            </div>
+            <div class="thumb-gallery" id="gallery-${src.id}" style="display:none"></div>
+          </div>
+          <div id="poe-json-panel" style="display:none">
+            <div class="json-drop-zone" id="jsondrop-${src.id}"
+              ondragover="onDragOverJson(event,'${src.id}')" ondragleave="onDragLeaveJson('${src.id}')" ondrop="onDropJson(event,'${src.id}')">
+              <textarea class="json-input" id="json-${src.id}"
+                placeholder="Paste JSON from Opportunity Explorer Insights extension, or drag a .json file here..."
+                oninput="handleJsonInput('${src.id}',this.value)"></textarea>
+              <div class="json-drop-zone-hint">Drag a .json file here to populate</div>
+            </div>
+          </div>
+          ` : `
+          <div class="sc-actions">
+            <a class="open-btn" href="${url}" target="_blank">${src.urlLabel}</a>
+            <label class="upload-label" for="file-${src.id}">
+              ↑ Add screenshots
+              <input type="file" id="file-${src.id}" class="upload-input" accept="image/*" multiple onchange="handleScreenshot('${src.id}',this)">
+            </label>
+          </div>
+          <div class="drop-zone" id="drop-${src.id}"
+            ondragover="onDragOver(event,'${src.id}')" ondragleave="onDragLeave('${src.id}')" ondrop="onDropImage(event,'${src.id}')">
+            Drop screenshots here
+          </div>
+          <div class="thumb-gallery" id="gallery-${src.id}" style="display:none"></div>
+          `}
+        </div>
+      </div>`;
+  }
 
   setMain(`
     <div class="collect-wrap">
@@ -455,117 +553,128 @@ function renderCollecting() {
         <div class="collect-meta">Analyst: <span>${analyst}</span></div>
         <div class="collect-meta">Period: <span>${period}</span></div>
       </div>
-
-      <div class="source-grid">
-        ${SOURCES.map(src => {
-          const isPOE = src.id === 'poe';
-          return `
-        <div class="source-card" id="sc-${src.id}">
-          <div class="sc-header">
-            <div class="sc-icon">${src.icon}</div>
-            <div class="sc-name">${src.name}</div>
-            <div class="sc-badge badge-screenshot" id="badge-${src.id}">${isPOE ? 'Screenshot / JSON' : 'Screenshot'}</div>
-          </div>
-          <div class="sc-body" id="scbody-${src.id}">
-            <div class="sc-instruction">${src.instruction(confirmedCategory)}</div>
-            ${isPOE ? `
-            <div class="poe-tabs">
-              <button class="poe-tab active" id="poetab-screenshot" onclick="switchPOETab('screenshot')">Screenshot</button>
-              <button class="poe-tab" id="poetab-json" onclick="switchPOETab('json')">Paste JSON</button>
-            </div>
-            <div id="poe-screenshot-panel">
-              <div class="sc-actions">
-                <a class="open-btn" href="${src.url(searchKeyword)}" target="_blank">${src.urlLabel}</a>
-                <label class="upload-label" for="file-${src.id}">
-                  ↑ Upload screenshot
-                  <input type="file" id="file-${src.id}" class="upload-input" accept="image/*" onchange="handleScreenshot('${src.id}',this)">
-                </label>
-              </div>
-              <div class="drop-zone" id="drop-${src.id}" ondragover="onDragOver(event,'${src.id}')" ondragleave="onDragLeave('${src.id}')" ondrop="onDrop(event,'${src.id}')">
-                Drop screenshot here
-              </div>
-              <div class="sc-preview" id="preview-${src.id}">
-                <img id="img-${src.id}" src="" alt="screenshot preview">
-                <div class="sc-ready-label" style="margin-top:6px">✓ Ready</div>
-              </div>
-            </div>
-            <div id="poe-json-panel" style="display:none">
-              <textarea class="json-input" id="json-poe" placeholder='Paste JSON from Opportunity Explorer Insights extension here...' oninput="handleJsonInput('poe',this.value)"></textarea>
-              <div class="sc-ready-label" id="json-poe-ready" style="display:none;margin-top:6px">✓ JSON Ready</div>
-            </div>
-            ` : `
-            <div class="sc-actions">
-              <a class="open-btn" href="${src.url(searchKeyword)}" target="_blank">${src.urlLabel}</a>
-              <label class="upload-label" for="file-${src.id}">
-                ↑ Upload screenshot
-                <input type="file" id="file-${src.id}" class="upload-input" accept="image/*" onchange="handleScreenshot('${src.id}',this)">
-              </label>
-            </div>
-            <div class="drop-zone" id="drop-${src.id}" ondragover="onDragOver(event,'${src.id}')" ondragleave="onDragLeave('${src.id}')" ondrop="onDrop(event,'${src.id}')">
-              Drop screenshot here
-            </div>
-            <div class="sc-preview" id="preview-${src.id}">
-              <img id="img-${src.id}" src="" alt="screenshot preview">
-              <div class="sc-ready-label" style="margin-top:6px">✓ Ready</div>
-            </div>
-            `}
-          </div>
-        </div>`;
-        }).join('')}
-      </div>
-
+      <div class="source-grid">${SOURCES.map(cardHtml).join('')}</div>
       <div class="synth-bar">
         <div class="synth-status" id="synth-status">Add screenshots or JSON to begin</div>
         <button class="synth-btn" id="synth-btn" disabled onclick="runSynthesis()">Synthesise →</button>
       </div>
     </div>`);
+
+  if (!resetData) restoreCardState();
 }
 
-// ─── Screenshot handling ──────────────────────────────────────────────────────
-function loadFile(sourceId, file) {
+// ─── Screenshot / file handling ───────────────────────────────────────────────
+function loadImageFile(sourceId, file) {
   if (!file || !file.type.startsWith('image/')) return;
   const reader = new FileReader();
   reader.onload = (e) => {
-    const b64 = e.target.result.split(',')[1];
-    screenshots[sourceId] = { base64: b64, mimeType: file.type };
-    markSourceReady(sourceId, e.target.result);
+    if (!screenshots[sourceId]) screenshots[sourceId] = [];
+    screenshots[sourceId].push({ base64: e.target.result.split(',')[1], mimeType: file.type });
+    rebuildThumbnails(sourceId);
     updateSynthButton();
   };
   reader.readAsDataURL(file);
 }
 
 function handleScreenshot(sourceId, input) {
-  loadFile(sourceId, input.files[0]);
+  Array.from(input.files).forEach(f => loadImageFile(sourceId, f));
 }
 
 function onDragOver(e, sourceId) {
   e.preventDefault();
   document.getElementById(`drop-${sourceId}`)?.classList.add('drag-over');
 }
-
 function onDragLeave(sourceId) {
   document.getElementById(`drop-${sourceId}`)?.classList.remove('drag-over');
 }
-
-function onDrop(e, sourceId) {
+function onDropImage(e, sourceId) {
   e.preventDefault();
   document.getElementById(`drop-${sourceId}`)?.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  loadFile(sourceId, file);
+  Array.from(e.dataTransfer.files).forEach(f => loadImageFile(sourceId, f));
 }
 
-function markSourceReady(sourceId, dataUrl) {
-  document.getElementById(`sc-${sourceId}`)?.classList.add('ready');
+function rebuildThumbnails(sourceId) {
+  const arr = screenshots[sourceId] || [];
+  const gallery = document.getElementById(`gallery-${sourceId}`);
   const badge = document.getElementById(`badge-${sourceId}`);
-  if (badge) { badge.textContent = '✓ Ready'; badge.className = 'sc-badge badge-ready'; }
+  const card = document.getElementById(`sc-${sourceId}`);
   const drop = document.getElementById(`drop-${sourceId}`);
+
+  if (arr.length === 0) {
+    if (gallery) { gallery.innerHTML = ''; gallery.style.display = 'none'; }
+    if (drop) drop.style.display = '';
+    if (badge) { badge.textContent = 'Screenshot'; badge.className = 'sc-badge badge-screenshot'; }
+    card?.classList.remove('ready');
+    return;
+  }
+
   if (drop) drop.style.display = 'none';
-  const preview = document.getElementById(`preview-${sourceId}`);
-  const img = document.getElementById(`img-${sourceId}`);
-  if (preview && img) { img.src = dataUrl; preview.style.display = 'block'; }
+  if (gallery) {
+    gallery.style.display = 'flex';
+    gallery.innerHTML = arr.map((d, i) => `
+      <div class="thumb-item">
+        <img class="thumb-img" src="data:${d.mimeType};base64,${d.base64}">
+        <button class="thumb-remove" onclick="removeScreenshot('${sourceId}',${i})">✕</button>
+      </div>`).join('') +
+      `<label class="thumb-add" for="file-${sourceId}">+ Add</label>`;
+  }
+
+  if (badge) {
+    badge.textContent = `✓ ${arr.length} screenshot${arr.length > 1 ? 's' : ''}`;
+    badge.className = 'sc-badge badge-ready';
+  }
+  card?.classList.add('ready');
 }
 
-// ─── POE JSON input ───────────────────────────────────────────────────────────
+function removeScreenshot(sourceId, index) {
+  if (screenshots[sourceId]) {
+    screenshots[sourceId].splice(index, 1);
+    if (screenshots[sourceId].length === 0) delete screenshots[sourceId];
+  }
+  rebuildThumbnails(sourceId);
+  updateSynthButton();
+}
+
+// ─── JSON drag-and-drop ───────────────────────────────────────────────────────
+function onDragOverJson(e, sourceId) {
+  e.preventDefault();
+  document.getElementById(`jsondrop-${sourceId}`)?.classList.add('drag-over');
+}
+function onDragLeaveJson(sourceId) {
+  document.getElementById(`jsondrop-${sourceId}`)?.classList.remove('drag-over');
+}
+function onDropJson(e, sourceId) {
+  e.preventDefault();
+  document.getElementById(`jsondrop-${sourceId}`)?.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const text = ev.target.result;
+    const ta = document.getElementById(`json-${sourceId}`);
+    if (ta) ta.value = text;
+    handleJsonInput(sourceId, text);
+  };
+  reader.readAsText(file);
+}
+
+function handleJsonInput(sourceId, value) {
+  const trimmed = value.trim();
+  const badge = document.getElementById(`badge-${sourceId}`);
+  const card = document.getElementById(`sc-${sourceId}`);
+  if (trimmed.length > 10) {
+    jsonInputs[sourceId] = trimmed;
+    if (badge) { badge.textContent = '✓ JSON Ready'; badge.className = 'sc-badge badge-ready'; }
+    card?.classList.add('ready');
+  } else {
+    delete jsonInputs[sourceId];
+    if (badge) { badge.textContent = 'Screenshot / JSON'; badge.className = 'sc-badge badge-screenshot'; }
+    if (!screenshots[sourceId]?.length) card?.classList.remove('ready');
+  }
+  updateSynthButton();
+}
+
+// ─── POE tab switch ───────────────────────────────────────────────────────────
 function switchPOETab(tab) {
   const isJson = tab === 'json';
   document.getElementById('poe-screenshot-panel').style.display = isJson ? 'none' : '';
@@ -574,38 +683,53 @@ function switchPOETab(tab) {
   document.getElementById('poetab-json').classList.toggle('active', isJson);
 }
 
-function handleJsonInput(sourceId, value) {
-  const trimmed = value.trim();
-  if (trimmed.length > 10) {
-    jsonInputs[sourceId] = trimmed;
-    document.getElementById(`sc-${sourceId}`)?.classList.add('ready');
-    const badge = document.getElementById(`badge-${sourceId}`);
-    if (badge) { badge.textContent = '✓ JSON Ready'; badge.className = 'sc-badge badge-ready'; }
-    const ready = document.getElementById(`json-${sourceId}-ready`);
-    if (ready) ready.style.display = 'flex';
-  } else {
-    delete jsonInputs[sourceId];
-    document.getElementById(`sc-${sourceId}`)?.classList.remove('ready');
-    const badge = document.getElementById(`badge-${sourceId}`);
-    if (badge) { badge.textContent = 'Screenshot / JSON'; badge.className = 'sc-badge badge-screenshot'; }
-  }
-  updateSynthButton();
+// ─── Guide toggle ─────────────────────────────────────────────────────────────
+function toggleGuide(sourceId) {
+  const guide = document.getElementById(`guide-${sourceId}`);
+  const btn = document.getElementById(`guidebtn-${sourceId}`);
+  if (!guide) return;
+  const open = guide.style.display === 'block';
+  guide.style.display = open ? 'none' : 'block';
+  btn?.classList.toggle('open', !open);
 }
 
+// ─── Synth button state ───────────────────────────────────────────────────────
 function updateSynthButton() {
   const scCount = Object.keys(screenshots).length;
   const jsonCount = Object.keys(jsonInputs).length;
   const total = scCount + jsonCount;
-  const canSynth = total >= 1;
-
   const btn = document.getElementById('synth-btn');
   const status = document.getElementById('synth-status');
   if (!btn || !status) return;
-
   status.innerHTML = total > 0
     ? `<strong>${total} of ${SOURCES.length} sources ready</strong>${jsonCount ? ` · ${jsonCount} JSON` : ''}`
     : 'Add screenshots or JSON to begin';
-  btn.disabled = !canSynth;
+  btn.disabled = total < 1;
+}
+
+// ─── Restore card state after re-render ──────────────────────────────────────
+function restoreCardState() {
+  for (const id of Object.keys(screenshots)) rebuildThumbnails(id);
+  if (jsonInputs['poe']) {
+    switchPOETab('json');
+    const ta = document.getElementById('json-poe');
+    if (ta) ta.value = jsonInputs['poe'];
+    handleJsonInput('poe', jsonInputs['poe']);
+  }
+  updateSynthButton();
+}
+
+// ─── Robust JSON extractor ────────────────────────────────────────────────────
+function extractJSON(text) {
+  if (!text) throw new Error('Empty response from Claude');
+  try { return JSON.parse(text); } catch {}
+  const s = text.replace(/```json\n?|\n?```/g, '').trim();
+  try { return JSON.parse(s); } catch {}
+  const start = s.indexOf('{'), end = s.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    try { return JSON.parse(s.slice(start, end + 1)); } catch {}
+  }
+  throw new Error(`Could not parse response. Starts with: "${text.slice(0, 100)}"`);
 }
 
 // ─── SYNTHESIS ────────────────────────────────────────────────────────────────
@@ -613,20 +737,14 @@ async function runSynthesis() {
   appState = 'synthesising';
 
   const steps = [
-    'Analysing DataDive data...',
-    'Reading screenshots...',
-    'Evaluating market trends...',
-    'Building competitive picture...',
-    'Writing report...',
+    'Reading sources...', 'Evaluating market trends...', 'Building competitive picture...',
+    'Assessing market structure...', 'Writing report...',
   ];
   let stepIdx = 0;
-
-  function stepHtml() {
-    return steps.map((s,i) => `
-      <div class="synth-step ${i < stepIdx ? 'done' : i === stepIdx ? 'active' : ''}">
-        <div class="step-dot"></div>${i < stepIdx ? '✓ ' : ''}${s}
-      </div>`).join('');
-  }
+  const stepHtml = () => steps.map((s, i) => `
+    <div class="synth-step ${i < stepIdx ? 'done' : i === stepIdx ? 'active' : ''}">
+      <div class="step-dot"></div>${i < stepIdx ? '✓ ' : ''}${s}
+    </div>`).join('');
 
   setMain(`
     <div class="synth-loading">
@@ -639,31 +757,40 @@ async function runSynthesis() {
     stepIdx = Math.min(stepIdx + 1, steps.length - 1);
     const el = document.getElementById('steps');
     if (el) el.innerHTML = stepHtml();
-  }, 2500);
+  }, 2800);
 
-  // Build content array
+  const sourceNames = {
+    trends: 'Google Trends (US, 12 months)',
+    poe: 'Amazon Product Opportunity Explorer + Opportunity Explorer Insights extension',
+    smartscout: 'Smart Scout — Brand Market Share',
+    datarova: 'Datarova — YoY Trend Comparison',
+    growth: 'Vendor Central — Growth Opportunities',
+    mpg: 'Vendor Central — Marketplace Product Guidance',
+  };
+
   const content = [];
-  const sourceNames = { trends: 'Google Trends (US, 12 months)', poe: 'Amazon Product Opportunity Explorer + Opportunity Explorer Insights extension', smartscout: 'Smart Scout — Brand Market Share', datarova: 'Datarova — YoY Trend Comparison', growth: 'Vendor Central — Growth Opportunities', mpg: 'Vendor Central — Marketplace Product Guidance' };
+  content.push({ type: 'text', text: `Analyse the "${confirmedCategory}" category on Amazon. Period: ${period}. Analyst: ${analyst}.` });
 
-  content.push({ type: 'text', text: `Please analyse the "${confirmedCategory}" category on Amazon. Period: ${period}. Analyst: ${analyst}.` });
-
-  // POE JSON input (if provided, add as structured text before images)
   if (jsonInputs['poe']) {
-    content.push({ type: 'text', text: `PRODUCT OPPORTUNITY EXPLORER DATA (JSON from Opportunity Explorer Insights extension):\n${jsonInputs['poe']}` });
+    content.push({ type: 'text', text: `PRODUCT OPPORTUNITY EXPLORER DATA (JSON from Opportunity Explorer Insights extension — exact numbers):\n${jsonInputs['poe']}` });
   }
 
-  // Screenshots as images
-  for (const [id, data] of Object.entries(screenshots)) {
-    content.push({ type: 'text', text: `Screenshot from: ${sourceNames[id] || id}` });
-    content.push({ type: 'image', source: { type: 'base64', media_type: data.mimeType, data: data.base64 } });
+  for (const [id, dataArray] of Object.entries(screenshots)) {
+    dataArray.forEach((data, i) => {
+      const label = dataArray.length > 1
+        ? `${sourceNames[id] || id} (image ${i + 1} of ${dataArray.length})`
+        : (sourceNames[id] || id);
+      content.push({ type: 'text', text: `Screenshot: ${label}` });
+      content.push({ type: 'image', source: { type: 'base64', media_type: data.mimeType, data: data.base64 } });
+    });
   }
 
-  const missing = SOURCES.filter(s => !screenshots[s.id] && !jsonInputs[s.id]).map(s => s.name);
+  const missing = SOURCES.filter(s => !screenshots[s.id]?.length && !jsonInputs[s.id]).map(s => s.name);
   if (missing.length) {
-    content.push({ type: 'text', text: `Data NOT provided for: ${missing.join(', ')}. Note these gaps in your analysis.` });
+    content.push({ type: 'text', text: `Data NOT provided for: ${missing.join(', ')}. Note these gaps.` });
   }
 
-  content.push({ type: 'text', text: `Produce the JSON analysis. Extract exact numbers from screenshots and JSON where visible. Note confidence level if key data is missing.\n\nReturn ONLY this JSON with no markdown:\n{"market_trend":"up|down|flat","asp_trend":"up|down|flat","competition_trend":"harder|easier|stable","new_entrants":"high|medium|low","confidence":"high|medium|low","sections":{"market_performance":"...","seasonal_patterns":"...","market_structure":"...","product_search_dynamics":"...","strategic_considerations":{"opportunities":["..."],"challenges":["..."],"risks":["..."]}},"verdict":"one paragraph executive summary","signal_alignment":"one sentence"}` });
+  content.push({ type: 'text', text: `Produce the JSON analysis. Extract exact numbers from screenshots and JSON where visible. Note confidence if data is missing.\n\nReturn ONLY this JSON, no markdown:\n{"market_trend":"up|down|flat","asp_trend":"up|down|flat","competition_trend":"harder|easier|stable","new_entrants":"high|medium|low","confidence":"high|medium|low","sections":{"market_performance":"...","seasonal_patterns":"...","market_structure":"...","product_search_dynamics":"...","strategic_considerations":{"opportunities":["..."],"challenges":["..."],"risks":["..."]}},"verdict":"one paragraph executive summary","signal_alignment":"one sentence"}` });
 
   try {
     const r = await fetch('/api/chat', {
@@ -671,92 +798,78 @@ async function runSynthesis() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        system: `You are a senior Amazon market analyst for Lifepro, a health & wellness brand selling exclusively through 1P Vendor Central. You receive data from multiple sources and produce structured category analyses that help PMs make strategic decisions. Be analytical and specific — use exact numbers when available from DataDive, and extract data precisely from screenshots. If a data source is missing, note the gap but still produce actionable insights from what is available.`,
+        max_tokens: 6000,
+        system: `You are a senior Amazon market analyst for Lifepro, a health & wellness 1P Vendor Central brand. Produce structured category analyses from screenshots and JSON data. Be specific — extract exact numbers where visible. If a source is missing, note the gap but still produce actionable insights from available data.`,
         messages: [{ role: 'user', content }]
       })
     });
     clearInterval(stepper);
     const resp = await r.json();
     const text = resp.content?.[0]?.text || '';
-    const json = JSON.parse(text.replace(/```json\n?|\n?```/g,'').trim());
+    const json = extractJSON(text);
 
     renderReport(json, confirmedCategory, period, analyst, new Date().toISOString());
 
-    // Save to Supabase
     fetch('/api/analyses?action=save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        category: confirmedCategory,
-        period,
-        analyst,
+        category: confirmedCategory, period, analyst,
         raw_inputs: { keyword: searchKeyword, screenshots_provided: Object.keys(screenshots), json_provided: Object.keys(jsonInputs) },
         analysis: json,
-        market_trend: json.market_trend,
-        asp_trend: json.asp_trend,
-        competition_trend: json.competition_trend,
-        new_entrants: json.new_entrants,
+        market_trend: json.market_trend, asp_trend: json.asp_trend,
+        competition_trend: json.competition_trend, new_entrants: json.new_entrants,
       })
     }).then(() => loadSidebar()).catch(() => {});
 
   } catch(e) {
     clearInterval(stepper);
-    setMain(`<div class="loading-wrap"><div style="color:var(--red-light);font-size:13px">Synthesis failed: ${e.message}</div><button class="btn-ghost" style="margin-top:12px" onclick="goHome()">← Start over</button></div>`);
+    setMain(`
+      <div class="loading-wrap">
+        <div style="color:var(--red-light);font-size:13px;text-align:center">
+          Synthesis failed: ${e.message}
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn-ghost" onclick="renderCollecting(false)">← Edit inputs</button>
+          <button class="synth-btn" style="padding:7px 20px;font-size:12px" onclick="runSynthesis()">Retry →</button>
+        </div>
+      </div>`);
   }
 }
 
-// ─── REPORT RENDER ────────────────────────────────────────────────────────────
+// ─── REPORT ───────────────────────────────────────────────────────────────────
 function renderReport(a, category, period, analyst, createdAt) {
   appState = 'report';
-  const date = createdAt ? new Date(createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+  const date = createdAt ? new Date(createdAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
 
   function sigPill(label, val, clsMap, labelMap) {
     if (!val) return '';
-    const cls = clsMap[val] || 'sig-flat';
-    const lbl = (labelMap && labelMap[val]) || val;
-    return `<span class="sig-pill ${cls}">${label}: ${lbl}</span>`;
+    return `<span class="sig-pill ${clsMap[val] || 'sig-flat'}">${label}: ${(labelMap && labelMap[val]) || val}</span>`;
   }
 
   setMain(`
     <div class="report-wrap">
-      <div class="report-header">
-        <div class="report-title">${category}</div>
-        <div class="report-meta">${period} · ${analyst} · ${date}</div>
-        <div class="signal-row">
-          ${sigPill('Market', a.market_trend, {up:'sig-up',down:'sig-down',flat:'sig-flat'}, {up:'↑ Growing',down:'↓ Declining',flat:'→ Flat'})}
-          ${sigPill('ASP', a.asp_trend, {up:'sig-up',down:'sig-down',flat:'sig-flat'}, {up:'↑ Rising',down:'↓ Falling',flat:'→ Stable'})}
-          ${sigPill('Competition', a.competition_trend, {harder:'sig-harder',easier:'sig-easier',stable:'sig-stable'}, {harder:'Harder',easier:'Easier',stable:'Stable'})}
-          ${sigPill('New Entrants', a.new_entrants, {high:'sig-high',medium:'sig-medium',low:'sig-low'}, {high:'High',medium:'Medium',low:'Low'})}
-          ${a.confidence ? sigPill('Confidence', a.confidence, {high:'sig-up',medium:'sig-medium',low:'sig-flat'}, {high:'High',medium:'Medium',low:'Low'}) : ''}
-        </div>
+      <div class="report-title">${category}</div>
+      <div class="report-meta">${period} · ${analyst} · ${date}</div>
+      <div class="signal-row">
+        ${sigPill('Market', a.market_trend, {up:'sig-up',down:'sig-down',flat:'sig-flat'}, {up:'↑ Growing',down:'↓ Declining',flat:'→ Flat'})}
+        ${sigPill('ASP', a.asp_trend, {up:'sig-up',down:'sig-down',flat:'sig-flat'}, {up:'↑ Rising',down:'↓ Falling',flat:'→ Stable'})}
+        ${sigPill('Competition', a.competition_trend, {harder:'sig-harder',easier:'sig-easier',stable:'sig-stable'}, {harder:'Harder',easier:'Easier',stable:'Stable'})}
+        ${sigPill('New Entrants', a.new_entrants, {high:'sig-high',medium:'sig-medium',low:'sig-low'}, {high:'High',medium:'Medium',low:'Low'})}
+        ${a.confidence ? sigPill('Confidence', a.confidence, {high:'sig-up',medium:'sig-medium',low:'sig-flat'}, {high:'High',medium:'Medium',low:'Low'}) : ''}
       </div>
-
       ${a.verdict ? `<div class="verdict-box"><div class="verdict-label">Executive Summary</div>${a.verdict}</div>` : ''}
-
       ${a.sections?.market_performance ? `<div class="section-card"><div class="section-card-title">Market Performance</div><div class="section-card-body">${a.sections.market_performance}</div></div>` : ''}
       ${a.sections?.seasonal_patterns ? `<div class="section-card"><div class="section-card-title">Seasonal Patterns</div><div class="section-card-body">${a.sections.seasonal_patterns}</div></div>` : ''}
       ${a.sections?.market_structure ? `<div class="section-card"><div class="section-card-title">Market Structure & Competition</div><div class="section-card-body">${a.sections.market_structure}</div></div>` : ''}
       ${a.sections?.product_search_dynamics ? `<div class="section-card"><div class="section-card-title">Product & Search Dynamics</div><div class="section-card-body">${a.sections.product_search_dynamics}</div></div>` : ''}
-
       ${a.sections?.strategic_considerations ? `
       <div class="strategic-grid">
-        <div class="strat-card strat-opp">
-          <div class="strat-title">Opportunities</div>
-          <ul class="strat-list">${(a.sections.strategic_considerations.opportunities||[]).map(o=>`<li>${o}</li>`).join('')}</ul>
-        </div>
-        <div class="strat-card strat-chal">
-          <div class="strat-title">Challenges</div>
-          <ul class="strat-list">${(a.sections.strategic_considerations.challenges||[]).map(c=>`<li>${c}</li>`).join('')}</ul>
-        </div>
-        <div class="strat-card strat-risk">
-          <div class="strat-title">Risks</div>
-          <ul class="strat-list">${(a.sections.strategic_considerations.risks||[]).map(r=>`<li>${r}</li>`).join('')}</ul>
-        </div>
+        <div class="strat-card strat-opp"><div class="strat-title">Opportunities</div><ul class="strat-list">${(a.sections.strategic_considerations.opportunities||[]).map(o=>`<li>${o}</li>`).join('')}</ul></div>
+        <div class="strat-card strat-chal"><div class="strat-title">Challenges</div><ul class="strat-list">${(a.sections.strategic_considerations.challenges||[]).map(c=>`<li>${c}</li>`).join('')}</ul></div>
+        <div class="strat-card strat-risk"><div class="strat-title">Risks</div><ul class="strat-list">${(a.sections.strategic_considerations.risks||[]).map(r=>`<li>${r}</li>`).join('')}</ul></div>
       </div>` : ''}
-
       ${a.signal_alignment ? `<div class="signal-align">${a.signal_alignment}</div>` : ''}
-
       <div class="report-actions">
         <button class="btn-ghost" onclick="goHome()">+ New Analysis</button>
       </div>
