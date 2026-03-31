@@ -180,6 +180,21 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .report-actions{display:flex;gap:10px;margin-top:20px}
 .btn-ghost{padding:7px 16px;border-radius:6px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.15s}
 .btn-ghost:hover{border-color:var(--text);color:var(--text)}
+
+/* DRAG & DROP */
+.drop-zone{margin-top:10px;border:1.5px dashed var(--border2);border-radius:6px;padding:12px;text-align:center;font-size:11px;color:var(--muted);transition:all 0.15s;cursor:pointer}
+.drop-zone.drag-over{border-color:var(--purple-light);background:var(--purple-dim);color:var(--purple-light)}
+
+/* POE TABS */
+.poe-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:1px solid var(--border)}
+.poe-tab{padding:6px 14px;font-size:11px;font-weight:600;background:transparent;border:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;letter-spacing:0.03em}
+.poe-tab:hover{color:var(--text)}
+.poe-tab.active{color:var(--purple-light);border-bottom-color:var(--purple-light)}
+
+/* JSON INPUT */
+.json-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;resize:vertical;min-height:90px;transition:border-color 0.15s}
+.json-input:focus{border-color:var(--purple-light)}
+.json-input::placeholder{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -207,9 +222,8 @@ let confirmedCategory = '';
 let searchKeyword = '';
 let analyst = '';
 let period = '';
-let datadiveData = null;
-let datadiveStatus = 'idle'; // 'idle' | 'loading' | 'found' | 'notfound' | 'error'
 let screenshots = {}; // { sourceId: { base64, mimeType } }
+let jsonInputs = {};  // { sourceId: jsonString } — for POE JSON paste
 let currentAnalysisId = null;
 
 // ─── Source definitions ───────────────────────────────────────────────────────
@@ -226,9 +240,10 @@ const SOURCES = [
     id: 'poe',
     name: 'Product Opportunity Explorer',
     icon: '🔍',
-    instruction: kw => `In Vendor Central go to <strong>Analytics → Product Opportunity Explorer</strong>. Search for <strong>"${kw}"</strong>. Make sure the <em>Opportunity Explorer Insights</em> extension panel is visible. Screenshot the full page.`,
+    instruction: kw => `Use the <strong>Opportunity Explorer Insights</strong> Chrome extension — it adds structured data directly to the POE page. In Vendor Central go to <strong>Analytics → Product Opportunity Explorer</strong>, search <strong>"${kw}"</strong>, and either screenshot the extension panel <em>or</em> copy its JSON export and paste below.`,
     url: () => `https://vendorcentral.amazon.com`,
     urlLabel: 'Open Vendor Central ↗',
+    jsonSupport: true,
   },
   {
     id: 'smartscout',
@@ -336,7 +351,7 @@ function renderHome() {
     <div class="home-card">
       <div class="home-icon">📊</div>
       <div class="home-title">New Category Analysis</div>
-      <div class="home-sub">Enter the product category, then collect data from 7 sources.<br>DataDive pulls automatically — the rest need a quick screenshot.</div>
+      <div class="home-sub">Enter the product category, then collect data from 6 sources.<br>Screenshot or paste JSON from each source — no manual number entry.</div>
       <div class="home-form">
         <div>
           <div class="field-label">Product Category</div>
@@ -430,9 +445,8 @@ function selectOption(label, keyword) {
 // ─── COLLECTING STATE ─────────────────────────────────────────────────────────
 function renderCollecting() {
   appState = 'collecting';
-  datadiveData = null;
-  datadiveStatus = 'idle';
   screenshots = {};
+  jsonInputs = {};
 
   setMain(`
     <div class="collect-wrap">
@@ -443,26 +457,43 @@ function renderCollecting() {
       </div>
 
       <div class="source-grid">
-        <!-- DataDive (auto) -->
-        <div class="source-card" id="sc-datadive">
-          <div class="sc-header">
-            <div class="sc-icon">🤖</div>
-            <div class="sc-name">DataDive</div>
-            <div class="sc-badge badge-auto">Automated</div>
-            <div class="sc-status" id="dd-status"><div class="spinner" style="width:12px;height:12px;border-width:1.5px"></div></div>
-          </div>
-          <div class="sc-body" id="dd-body"><div style="color:var(--muted);font-size:12px">Searching DataDive niches...</div></div>
-        </div>
-
-        ${SOURCES.map(src => `
+        ${SOURCES.map(src => {
+          const isPOE = src.id === 'poe';
+          return `
         <div class="source-card" id="sc-${src.id}">
           <div class="sc-header">
             <div class="sc-icon">${src.icon}</div>
             <div class="sc-name">${src.name}</div>
-            <div class="sc-badge badge-screenshot" id="badge-${src.id}">Screenshot</div>
+            <div class="sc-badge badge-screenshot" id="badge-${src.id}">${isPOE ? 'Screenshot / JSON' : 'Screenshot'}</div>
           </div>
-          <div class="sc-body">
+          <div class="sc-body" id="scbody-${src.id}">
             <div class="sc-instruction">${src.instruction(confirmedCategory)}</div>
+            ${isPOE ? `
+            <div class="poe-tabs">
+              <button class="poe-tab active" id="poetab-screenshot" onclick="switchPOETab('screenshot')">Screenshot</button>
+              <button class="poe-tab" id="poetab-json" onclick="switchPOETab('json')">Paste JSON</button>
+            </div>
+            <div id="poe-screenshot-panel">
+              <div class="sc-actions">
+                <a class="open-btn" href="${src.url(searchKeyword)}" target="_blank">${src.urlLabel}</a>
+                <label class="upload-label" for="file-${src.id}">
+                  ↑ Upload screenshot
+                  <input type="file" id="file-${src.id}" class="upload-input" accept="image/*" onchange="handleScreenshot('${src.id}',this)">
+                </label>
+              </div>
+              <div class="drop-zone" id="drop-${src.id}" ondragover="onDragOver(event,'${src.id}')" ondragleave="onDragLeave('${src.id}')" ondrop="onDrop(event,'${src.id}')">
+                Drop screenshot here
+              </div>
+              <div class="sc-preview" id="preview-${src.id}">
+                <img id="img-${src.id}" src="" alt="screenshot preview">
+                <div class="sc-ready-label" style="margin-top:6px">✓ Ready</div>
+              </div>
+            </div>
+            <div id="poe-json-panel" style="display:none">
+              <textarea class="json-input" id="json-poe" placeholder='Paste JSON from Opportunity Explorer Insights extension here...' oninput="handleJsonInput('poe',this.value)"></textarea>
+              <div class="sc-ready-label" id="json-poe-ready" style="display:none;margin-top:6px">✓ JSON Ready</div>
+            </div>
+            ` : `
             <div class="sc-actions">
               <a class="open-btn" href="${src.url(searchKeyword)}" target="_blank">${src.urlLabel}</a>
               <label class="upload-label" for="file-${src.id}">
@@ -470,133 +501,110 @@ function renderCollecting() {
                 <input type="file" id="file-${src.id}" class="upload-input" accept="image/*" onchange="handleScreenshot('${src.id}',this)">
               </label>
             </div>
+            <div class="drop-zone" id="drop-${src.id}" ondragover="onDragOver(event,'${src.id}')" ondragleave="onDragLeave('${src.id}')" ondrop="onDrop(event,'${src.id}')">
+              Drop screenshot here
+            </div>
             <div class="sc-preview" id="preview-${src.id}">
               <img id="img-${src.id}" src="" alt="screenshot preview">
               <div class="sc-ready-label" style="margin-top:6px">✓ Ready</div>
             </div>
+            `}
           </div>
-        </div>`).join('')}
+        </div>`;
+        }).join('')}
       </div>
 
       <div class="synth-bar">
-        <div class="synth-status" id="synth-status">DataDive loading…</div>
+        <div class="synth-status" id="synth-status">Add screenshots or JSON to begin</div>
         <button class="synth-btn" id="synth-btn" disabled onclick="runSynthesis()">Synthesise →</button>
       </div>
     </div>`);
-
-  // Kick off DataDive search in background
-  searchDataDive(searchKeyword);
-}
-
-// ─── DataDive search ──────────────────────────────────────────────────────────
-async function searchDataDive(keyword) {
-  datadiveStatus = 'loading';
-  const kw = keyword.toLowerCase();
-
-  try {
-    let match = null;
-    for (let page = 1; page <= 5 && !match; page++) {
-      const r = await fetch(`/api/datadive?p=${encodeURIComponent('/niches?pageSize=100&page=' + page)}`);
-      if (!r.ok) throw new Error('DataDive API error');
-      const data = await r.json();
-      const niches = data.data || [];
-      match = niches.find(n => {
-        const hero = (n.heroKeyword || '').toLowerCase();
-        return hero.includes(kw) || kw.includes(hero);
-      });
-      if (niches.length < 100) break;
-    }
-
-    if (!match) {
-      datadiveStatus = 'notfound';
-      document.getElementById('dd-status').textContent = '–';
-      document.getElementById('dd-body').innerHTML = `<div style="color:var(--muted);font-size:12px">No matching niche found in DataDive. Synthesis will proceed without DataDive data.</div>`;
-      updateSynthButton();
-      return;
-    }
-
-    // Fetch niche details in parallel
-    const [kwR, compR] = await Promise.all([
-      fetch(`/api/datadive?p=${encodeURIComponent('/niches/' + match.nicheId + '/keywords')}`).then(r => r.json()),
-      fetch(`/api/datadive?p=${encodeURIComponent('/niches/' + match.nicheId + '/competitors')}`).then(r => r.json()),
-    ]);
-
-    datadiveData = {
-      niche: match,
-      keywords: kwR.data,
-      competitors: compR.data,
-    };
-    datadiveStatus = 'found';
-
-    const stats = compR.data?.statistics || {};
-    const kws = (kwR.data?.keywords || []).slice(0, 8);
-    const totalSV = stats.totalSvOfKeywords;
-
-    document.getElementById('sc-datadive').classList.add('ready');
-    document.getElementById('dd-status').innerHTML = `<span style="color:var(--green-light);font-size:11px">✓ Found</span>`;
-    document.getElementById('dd-body').innerHTML = `
-      <div class="dd-result">
-        <div class="dd-niche">${match.heroKeyword}</div>
-        <div class="dd-stats">
-          ${totalSV ? `<div class="dd-stat">Total SV <span>${fmtNum(totalSV)}</span></div>` : ''}
-          ${stats.numKeywords ? `<div class="dd-stat">Keywords <span>${fmtNum(stats.numKeywords)}</span></div>` : ''}
-          ${compR.data?.competitors?.length ? `<div class="dd-stat">Competitors <span>${compR.data.competitors.length}</span></div>` : ''}
-        </div>
-        ${kws.length ? `
-        <div class="dd-keywords">
-          <div class="dd-kw-label">Top keywords</div>
-          <div class="dd-kw-list">
-            ${kws.map((k,i) => `<span class="dd-kw-chip${i<3?' top':''}">${k.keyword||k.searchKeyword||'?'}</span>`).join('')}
-          </div>
-        </div>` : ''}
-      </div>`;
-  } catch(e) {
-    datadiveStatus = 'error';
-    document.getElementById('dd-status').textContent = '!';
-    document.getElementById('dd-body').innerHTML = `<div style="color:var(--red-light);font-size:12px">DataDive error: ${e.message}. Synthesis can still proceed using screenshots.</div>`;
-  }
-  updateSynthButton();
-}
-
-function fmtNum(n) {
-  if (!n && n !== 0) return '–';
-  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
-  if (n >= 1000) return (n/1000).toFixed(0) + 'K';
-  return n.toLocaleString();
 }
 
 // ─── Screenshot handling ──────────────────────────────────────────────────────
-function handleScreenshot(sourceId, input) {
-  const file = input.files[0];
-  if (!file) return;
+function loadFile(sourceId, file) {
+  if (!file || !file.type.startsWith('image/')) return;
   const reader = new FileReader();
   reader.onload = (e) => {
     const b64 = e.target.result.split(',')[1];
     screenshots[sourceId] = { base64: b64, mimeType: file.type };
-    // Update card
-    document.getElementById(`sc-${sourceId}`)?.classList.add('ready');
-    const badge = document.getElementById(`badge-${sourceId}`);
-    if (badge) { badge.textContent = '✓ Ready'; badge.className = 'sc-badge badge-ready'; }
-    const preview = document.getElementById(`preview-${sourceId}`);
-    const img = document.getElementById(`img-${sourceId}`);
-    if (preview && img) { img.src = e.target.result; preview.style.display = 'block'; }
+    markSourceReady(sourceId, e.target.result);
     updateSynthButton();
   };
   reader.readAsDataURL(file);
 }
 
+function handleScreenshot(sourceId, input) {
+  loadFile(sourceId, input.files[0]);
+}
+
+function onDragOver(e, sourceId) {
+  e.preventDefault();
+  document.getElementById(`drop-${sourceId}`)?.classList.add('drag-over');
+}
+
+function onDragLeave(sourceId) {
+  document.getElementById(`drop-${sourceId}`)?.classList.remove('drag-over');
+}
+
+function onDrop(e, sourceId) {
+  e.preventDefault();
+  document.getElementById(`drop-${sourceId}`)?.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  loadFile(sourceId, file);
+}
+
+function markSourceReady(sourceId, dataUrl) {
+  document.getElementById(`sc-${sourceId}`)?.classList.add('ready');
+  const badge = document.getElementById(`badge-${sourceId}`);
+  if (badge) { badge.textContent = '✓ Ready'; badge.className = 'sc-badge badge-ready'; }
+  const drop = document.getElementById(`drop-${sourceId}`);
+  if (drop) drop.style.display = 'none';
+  const preview = document.getElementById(`preview-${sourceId}`);
+  const img = document.getElementById(`img-${sourceId}`);
+  if (preview && img) { img.src = dataUrl; preview.style.display = 'block'; }
+}
+
+// ─── POE JSON input ───────────────────────────────────────────────────────────
+function switchPOETab(tab) {
+  const isJson = tab === 'json';
+  document.getElementById('poe-screenshot-panel').style.display = isJson ? 'none' : '';
+  document.getElementById('poe-json-panel').style.display = isJson ? '' : 'none';
+  document.getElementById('poetab-screenshot').classList.toggle('active', !isJson);
+  document.getElementById('poetab-json').classList.toggle('active', isJson);
+}
+
+function handleJsonInput(sourceId, value) {
+  const trimmed = value.trim();
+  if (trimmed.length > 10) {
+    jsonInputs[sourceId] = trimmed;
+    document.getElementById(`sc-${sourceId}`)?.classList.add('ready');
+    const badge = document.getElementById(`badge-${sourceId}`);
+    if (badge) { badge.textContent = '✓ JSON Ready'; badge.className = 'sc-badge badge-ready'; }
+    const ready = document.getElementById(`json-${sourceId}-ready`);
+    if (ready) ready.style.display = 'flex';
+  } else {
+    delete jsonInputs[sourceId];
+    document.getElementById(`sc-${sourceId}`)?.classList.remove('ready');
+    const badge = document.getElementById(`badge-${sourceId}`);
+    if (badge) { badge.textContent = 'Screenshot / JSON'; badge.className = 'sc-badge badge-screenshot'; }
+  }
+  updateSynthButton();
+}
+
 function updateSynthButton() {
-  const count = Object.keys(screenshots).length;
-  const ddOk = datadiveStatus === 'found' || datadiveStatus === 'notfound' || datadiveStatus === 'error';
-  const canSynth = ddOk && (datadiveStatus === 'found' || count >= 1);
+  const scCount = Object.keys(screenshots).length;
+  const jsonCount = Object.keys(jsonInputs).length;
+  const total = scCount + jsonCount;
+  const canSynth = total >= 1;
 
   const btn = document.getElementById('synth-btn');
   const status = document.getElementById('synth-status');
   if (!btn || !status) return;
 
-  const ddLabel = datadiveStatus === 'found' ? 'DataDive ✓' : datadiveStatus === 'loading' ? 'DataDive loading…' : 'DataDive –';
-  const scLabel = count > 0 ? `${count} of ${SOURCES.length} screenshots` : 'no screenshots yet';
-  status.innerHTML = `<strong>${ddLabel}</strong> · ${scLabel}`;
+  status.innerHTML = total > 0
+    ? `<strong>${total} of ${SOURCES.length} sources ready</strong>${jsonCount ? ` · ${jsonCount} JSON` : ''}`
+    : 'Add screenshots or JSON to begin';
   btn.disabled = !canSynth;
 }
 
@@ -635,40 +643,27 @@ async function runSynthesis() {
 
   // Build content array
   const content = [];
+  const sourceNames = { trends: 'Google Trends (US, 12 months)', poe: 'Amazon Product Opportunity Explorer + Opportunity Explorer Insights extension', smartscout: 'Smart Scout — Brand Market Share', datarova: 'Datarova — YoY Trend Comparison', growth: 'Vendor Central — Growth Opportunities', mpg: 'Vendor Central — Marketplace Product Guidance' };
+
   content.push({ type: 'text', text: `Please analyse the "${confirmedCategory}" category on Amazon. Period: ${period}. Analyst: ${analyst}.` });
 
-  if (datadiveData) {
-    const stats = datadiveData.competitors?.statistics || {};
-    const topKws = (datadiveData.keywords?.keywords || []).slice(0, 20);
-    const topComps = (datadiveData.competitors?.competitors || []).slice(0, 10);
-    content.push({
-      type: 'text',
-      text: `DATADIVE DATA (pulled directly from API — these numbers are exact):\n` +
-        `Niche: ${datadiveData.niche.heroKeyword}\n` +
-        `Total Search Volume: ${stats.totalSvOfKeywords || 'N/A'}\n` +
-        `Number of Keywords: ${stats.numKeywords || 'N/A'}\n` +
-        `Visible Keywords: ${stats.numVisibleKeywords || 'N/A'}\n` +
-        `Competitors tracked: ${topComps.length}\n` +
-        `Top Keywords (by SV):\n${topKws.map(k => `  - ${k.keyword||k.searchKeyword}: SV ${k.searchVolume||'?'}`).join('\n')}\n` +
-        `Top Competitors:\n${topComps.map(c => `  - ${c.brandName||c.asin||'?'}`).join('\n')}`
-    });
-  } else {
-    content.push({ type: 'text', text: `DataDive: No matching niche found. Rely on screenshot sources for market data.` });
+  // POE JSON input (if provided, add as structured text before images)
+  if (jsonInputs['poe']) {
+    content.push({ type: 'text', text: `PRODUCT OPPORTUNITY EXPLORER DATA (JSON from Opportunity Explorer Insights extension):\n${jsonInputs['poe']}` });
   }
 
-  // Add screenshots
-  const sourceNames = { trends: 'Google Trends (US, 12 months)', poe: 'Amazon Product Opportunity Explorer (with Insights extension)', smartscout: 'Smart Scout — Brand Market Share', datarova: 'Datarova — YoY Trend Comparison', growth: 'Vendor Central — Growth Opportunities', mpg: 'Vendor Central — Marketplace Product Guidance' };
+  // Screenshots as images
   for (const [id, data] of Object.entries(screenshots)) {
     content.push({ type: 'text', text: `Screenshot from: ${sourceNames[id] || id}` });
     content.push({ type: 'image', source: { type: 'base64', media_type: data.mimeType, data: data.base64 } });
   }
 
-  const missingScreenshots = SOURCES.filter(s => !screenshots[s.id]).map(s => s.name);
-  if (missingScreenshots.length) {
-    content.push({ type: 'text', text: `Data NOT provided (screenshots missing): ${missingScreenshots.join(', ')}. Note gaps in your analysis.` });
+  const missing = SOURCES.filter(s => !screenshots[s.id] && !jsonInputs[s.id]).map(s => s.name);
+  if (missing.length) {
+    content.push({ type: 'text', text: `Data NOT provided for: ${missing.join(', ')}. Note these gaps in your analysis.` });
   }
 
-  content.push({ type: 'text', text: `Produce the JSON analysis below. Be specific with numbers you can see in DataDive or screenshots. Note confidence level if key data is missing.\n\nReturn ONLY this JSON structure with no markdown:\n{"market_trend":"up|down|flat","asp_trend":"up|down|flat","competition_trend":"harder|easier|stable","new_entrants":"high|medium|low","confidence":"high|medium|low","sections":{"market_performance":"...","seasonal_patterns":"...","market_structure":"...","product_search_dynamics":"...","strategic_considerations":{"opportunities":["..."],"challenges":["..."],"risks":["..."]}},"verdict":"one paragraph executive summary","signal_alignment":"one sentence"}` });
+  content.push({ type: 'text', text: `Produce the JSON analysis. Extract exact numbers from screenshots and JSON where visible. Note confidence level if key data is missing.\n\nReturn ONLY this JSON with no markdown:\n{"market_trend":"up|down|flat","asp_trend":"up|down|flat","competition_trend":"harder|easier|stable","new_entrants":"high|medium|low","confidence":"high|medium|low","sections":{"market_performance":"...","seasonal_patterns":"...","market_structure":"...","product_search_dynamics":"...","strategic_considerations":{"opportunities":["..."],"challenges":["..."],"risks":["..."]}},"verdict":"one paragraph executive summary","signal_alignment":"one sentence"}` });
 
   try {
     const r = await fetch('/api/chat', {
@@ -696,7 +691,7 @@ async function runSynthesis() {
         category: confirmedCategory,
         period,
         analyst,
-        raw_inputs: { keyword: searchKeyword, datadive: datadiveData, screenshots_provided: Object.keys(screenshots) },
+        raw_inputs: { keyword: searchKeyword, screenshots_provided: Object.keys(screenshots), json_provided: Object.keys(jsonInputs) },
         analysis: json,
         market_trend: json.market_trend,
         asp_trend: json.asp_trend,
