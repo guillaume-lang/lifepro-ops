@@ -16,8 +16,13 @@ async def main():
     elif MODE == "reviews":
         from scraper.review_scraper import run_review_scrape
         await run_review_scrape()
+    elif MODE == "pm_sync":
+        from scraper.monday_client import fetch_pm_assignments
+        from scraper.supabase_client import upsert_pm_assignments
+        rows = await fetch_pm_assignments()
+        await upsert_pm_assignments(rows)
     else:
-        print(f"[error] Unknown SCRAPER_MODE: {MODE}. Use 'delivery' or 'reviews'.")
+        print(f"[error] Unknown SCRAPER_MODE: {MODE}. Use 'delivery', 'reviews', or 'pm_sync'.")
         sys.exit(1)
 
 if __name__ == "__main__":

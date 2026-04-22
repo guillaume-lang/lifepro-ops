@@ -10,6 +10,7 @@ Amazon USA Operations Platform — automated listing health, delivery intelligen
 | Deal PM Assistant | https://lifepro-deal-pm.vercel.app | Live |
 | SKU Anomaly Detector | https://lifepro-sku-anomaly.vercel.app | Live |
 | Inventory Forecaster | https://lifepro-inventory.vercel.app | Live |
+| PM KPI Tracker | https://lifepro-pm-kpi.vercel.app | Live |
 | PPC Decision Engine | Coming P4 | Planned |
 | Category Intelligence | Coming P5 | Planned |
 | Command Hub | Coming P7 | Planned |
@@ -22,6 +23,7 @@ tools/           # Frontend tools (deployed to Vercel)
   deal-pm/         # Deal planning PM assistant
   sku-anomaly/     # SKU anomaly monitor — Keepa BSR/price/buybox signals
   inventory-forecast/  # Inventory + PO forecaster — WH stock coverage vs lead time
+  pm-kpi/          # Per-PM KPI scorecard — 13 JD metrics + Power BI CSV upload
 
 scraper/         # Playwright scrapers (run via GitHub Actions)
   scraper/         # Python package
@@ -47,6 +49,7 @@ skills/          # Claude skill files
 .github/workflows/
   delivery-scraper.yml  # Runs daily at 6am EST
   review-monitor.yml    # Runs 4x daily
+  pm-sync.yml           # Nightly — syncs PM ↔ ASIN assignments from Monday
 ```
 
 ## Setup
@@ -60,6 +63,7 @@ Go to repo Settings → Secrets → Actions and add:
 | `SUPABASE_URL` | Supabase project → Settings → API → Project URL |
 | `SUPABASE_SERVICE_KEY` | Supabase project → Settings → API → service_role key |
 | `TEAMS_WEBHOOK_URL` | Teams channel → Connectors → Incoming Webhook |
+| `MONDAY_PM_COLUMN_ID` | *(optional)* override default PM column `multiple_person_mknhjhps` — only needed if you rename the PM column on board 8574487078 |
 
 ### Supabase Schema
 Run `scraper/supabase_schema.sql` once in your Supabase SQL editor.

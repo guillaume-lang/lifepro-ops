@@ -74,6 +74,17 @@ async def get_last_review_snapshots(asin_list: List[str]) -> List[Dict]:
     return latest
 
 
+async def upsert_pm_assignments(rows: List[Dict]):
+    """Replace pm_asin_assignments with the freshly-synced Monday.com rows."""
+    sb = get_client()
+    if not rows:
+        print("[supabase] PM sync produced 0 rows — skipping truncate")
+        return
+    sb.table("pm_asin_assignments").delete().neq("asin", "").execute()
+    sb.table("pm_asin_assignments").insert(rows).execute()
+    print(f"[supabase] Upserted {len(rows)} PM assignments")
+
+
 async def upsert_review_snapshots(results: List[Dict]):
     sb = get_client()
     rows = []

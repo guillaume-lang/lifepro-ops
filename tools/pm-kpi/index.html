@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM KPI Tracker — Lifepro</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0d0f;--surface:#13151a;--surface2:#1a1d24;--border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);--text:#e2e0da;--muted:#6b6962;--muted2:#3d3c39;
+  --red:#c0392b;--red-dim:rgba(192,57,43,0.15);--red-light:#e74c3c;
+  --amber:#c17f24;--amber-dim:rgba(193,127,36,0.12);--amber-light:#e6a32e;
+  --yellow:#b5a020;--yellow-dim:rgba(181,160,32,0.1);--yellow-light:#d4be28;
+  --green:#1a7a4a;--green-dim:rgba(26,122,74,0.12);--green-light:#27ae60;
+  --blue:#1a5fa0;--blue-light:#3498db;--blue-dim:rgba(26,95,160,0.12);
+  --mono:'JetBrains Mono','Fira Code','Cascadia Code',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:48px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.header-mark{width:18px;height:18px;background:var(--green-light);clip-path:polygon(50% 0%,100% 100%,0% 100%);flex-shrink:0}
+.header-title{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+.header-sep{width:1px;height:16px;background:var(--border2)}
+.header-meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.pm-select{background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-family:var(--mono);font-size:11px;cursor:pointer}
+.upload-btn{margin-left:auto;padding:5px 14px;border-radius:6px;border:1px solid var(--amber);background:var(--amber-dim);color:var(--amber-light);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.04em;transition:all 0.15s}
+.upload-btn:hover{background:var(--amber);color:#1a0e00}
+
+.main{padding:20px;max-width:1100px;margin:0 auto}
+.loading,.err{padding:60px 20px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:0.06em}
+.err{color:var(--red-light)}
+
+.summary-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.sum-card{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:10px 14px}
+.sum-label{font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;font-family:var(--mono)}
+.sum-val{font-size:22px;font-weight:600;font-family:var(--mono)}
+.sum-card.ok .sum-val{color:var(--green-light)}
+.sum-card.amber .sum-val{color:var(--amber-light)}
+.sum-card.red .sum-val{color:var(--red-light)}
+.sum-card.unknown .sum-val{color:var(--muted)}
+
+.meta-row{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:16px;display:flex;gap:16px}
+
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:6px;margin-bottom:8px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-family:var(--mono);background:var(--surface);border:0.5px solid var(--border);color:var(--muted)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:8px;padding:12px 14px;border-left:2px solid var(--muted2);display:flex;flex-direction:column;gap:4px;min-height:96px}
+.card.ok{border-left-color:var(--green-light)}
+.card.amber{border-left-color:var(--amber-light)}
+.card.red{border-left-color:var(--red-light)}
+.card.unknown{border-left-color:var(--muted2);opacity:0.65}
+.card-top{display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted2);flex-shrink:0}
+.card.ok .dot{background:var(--green-light)}
+.card.amber .dot{background:var(--amber-light)}
+.card.red .dot{background:var(--red-light)}
+.card-label{font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;font-family:var(--mono)}
+.card-value{font-size:26px;font-weight:600;font-family:var(--mono);line-height:1.1;margin-top:2px}
+.card-target{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.card-note{font-size:10px;color:var(--muted);font-style:italic;margin-top:auto}
+.card-spark{margin-top:4px;height:20px}
+.card-spark svg{width:100%;height:100%}
+.card-spark path{fill:none;stroke:var(--muted);stroke-width:1.2}
+.card.ok .card-spark path{stroke:var(--green-light)}
+.card.amber .card-spark path{stroke:var(--amber-light)}
+.card.red .card-spark path{stroke:var(--red-light)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:100}
+.modal-bg.active{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:20px;width:560px;max-width:90vw;max-height:80vh;display:flex;flex-direction:column;gap:12px}
+.modal-title{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--amber-light);font-family:var(--mono)}
+.modal-body{font-size:12px;color:var(--muted);line-height:1.6}
+.modal-body code{background:var(--surface2);padding:1px 5px;border-radius:3px;font-family:var(--mono);color:var(--text);font-size:11px}
+.drop-zone{border:1.5px dashed var(--border2);border-radius:8px;padding:30px;text-align:center;color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:var(--mono);font-size:11px}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--amber-light);background:var(--amber-dim);color:var(--amber-light)}
+.preview{background:var(--surface2);border-radius:6px;padding:10px;font-family:var(--mono);font-size:10px;color:var(--text);max-height:200px;overflow:auto;white-space:pre}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+.btn{padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:var(--mono);letter-spacing:0.04em}
+.btn-primary{border-color:var(--green);background:var(--green-dim);color:var(--green-light)}
+.btn-primary:hover{background:var(--green);color:#fff}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-mark"></div>
+  <div class="header-title">PM KPI Tracker</div>
+  <div class="header-sep"></div>
+  <div class="header-meta">Lifepro</div>
+  <div class="header-sep"></div>
+  <select class="pm-select" id="pmSelect" aria-label="Select PM"></select>
+  <button class="upload-btn" id="openUpload">Upload Power BI CSV</button>
+</div>
+
+<div class="main">
+  <div class="loading" id="loading">Loading scorecard…</div>
+  <div id="content" style="display:none"></div>
+  <div class="err" id="errBox" style="display:none"></div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-title">Upload Power BI Weekly CSV</div>
+    <div class="modal-body">
+      Expected columns: <code>pm, week_start, margin_pct, tacos_pct, acos_pct, yoy_growth_pct, market_share_delta_pct, promo_revenue_actual, promo_revenue_target</code>. One row per PM per week. Rows upsert by <code>(pm, week_start)</code>.
+    </div>
+    <div class="drop-zone" id="dropZone">Drop CSV here or click to pick a file</div>
+    <input type="file" id="fileInput" accept=".csv,text/csv" style="display:none">
+    <div class="preview" id="preview" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelUpload">Cancel</button>
+      <button class="btn btn-primary" id="submitUpload" disabled>Upload</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LABELS = {
+  margin_pct:               'Profit Margin',
+  tacos_pct:                'TACOS',
+  acos_pct:                 'ACOS',
+  yoy_growth_pct:           'YoY Sales Growth',
+  market_share_delta_pct:   'Market Share Δ YoY',
+  promo_revenue_pct:        'Promo Revenue vs Target',
+  tasks_on_time_pct:        'Forecast/PO Tasks On-Time',
+  listing_compliance_pct:   'Listing Compliance',
+  response_under_24h_pct:   'Response < 24h',
+  resolution_under_48h_pct: 'Issue Resolution < 48h',
+  avg_rating:               'Avg Product Rating',
+  in_stock_pct:             'In-Stock %',
+  overstock_pct:            'Overstock %',
+  competitor_review_done:   'Monthly Competitor Review',
+};
+
+const SECTIONS = [
+  { title: 'Financial & Ads', keys: ['margin_pct','tacos_pct','acos_pct','yoy_growth_pct','market_share_delta_pct','promo_revenue_pct'] },
+  { title: 'Operations',      keys: ['tasks_on_time_pct','listing_compliance_pct','response_under_24h_pct','resolution_under_48h_pct','competitor_review_done'] },
+  { title: 'Product & Inventory', keys: ['avg_rating','in_stock_pct','overstock_pct'] },
+];
+
+const fmt = (v, unit) => {
+  if (v == null) return '—';
+  if (typeof v === 'boolean') return v ? '✓' : '✗';
+  const rounded = unit === '★' ? v.toFixed(2) : (Math.abs(v) < 10 ? v.toFixed(1) : Math.round(v));
+  return `${rounded}${unit || ''}`;
+};
+
+const fmtTarget = (t) => {
+  if (!t) return '';
+  if (typeof t.value === 'boolean') return t.value ? 'must be ✓' : 'must be ✗';
+  return `${t.op} ${t.value}${t.unit}`;
+};
+
+function sparkline(values) {
+  const clean = values.filter(v => v != null);
+  if (clean.length < 2) return '';
+  const min = Math.min(...clean), max = Math.max(...clean);
+  const range = max - min || 1;
+  const w = 100, h = 20;
+  const step = w / (values.length - 1);
+  let d = '';
+  values.forEach((v, i) => {
+    if (v == null) return;
+    const x = i * step;
+    const y = h - ((v - min) / range) * (h - 2) - 1;
+    d += (d ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d}"/></svg>`;
+}
+
+function card(key, m) {
+  const unit = m.target?.unit || '';
+  const valueStr = fmt(m.value, unit);
+  const note = m.note ? `<div class="card-note">${m.note}</div>` : '';
+  const spark = m.spark?.length ? `<div class="card-spark">${sparkline(m.spark)}</div>` : '';
+  return `
+    <div class="card ${m.status}">
+      <div class="card-top"><div class="dot"></div><div class="card-label">${LABELS[key]}</div></div>
+      <div class="card-value">${valueStr}</div>
+      <div class="card-target">${fmtTarget(m.target)}</div>
+      ${spark}${note}
+    </div>`;
+}
+
+function render(data) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('errBox').style.display = 'none';
+  const c = document.getElementById('content');
+  c.style.display = 'block';
+
+  const sel = document.getElementById('pmSelect');
+  sel.innerHTML = (data.pm_list || []).map(p =>
+    `<option value="${p.slug}" ${p.slug === data.pm ? 'selected' : ''}>${p.name}</option>`
+  ).join('') || `<option value="${data.pm}" selected>${data.pm}</option>`;
+
+  const s = data.summary;
+  let html = `
+    <div class="summary-bar">
+      <div class="sum-card ok"><div class="sum-label">On target</div><div class="sum-val">${s.ok}</div></div>
+      <div class="sum-card amber"><div class="sum-label">Watch</div><div class="sum-val">${s.amber}</div></div>
+      <div class="sum-card red"><div class="sum-label">Off target</div><div class="sum-val">${s.red}</div></div>
+      <div class="sum-card unknown"><div class="sum-label">No data</div><div class="sum-val">${s.unknown}</div></div>
+    </div>
+    <div class="meta-row">
+      <span>PM: ${data.pm}</span>
+      <span>ASINs: ${data.asin_count}</span>
+      <span>Week of ${data.week_start}</span>
+      <span>Updated ${new Date(data.generated_at).toLocaleString()}</span>
+    </div>`;
+
+  for (const sec of SECTIONS) {
+    html += `<div class="section"><div class="section-header">${sec.title}</div><div class="cards">`;
+    for (const k of sec.keys) html += card(k, data.metrics[k]);
+    html += `</div></div>`;
+  }
+  c.innerHTML = html;
+}
+
+function showErr(msg) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'none';
+  const e = document.getElementById('errBox');
+  e.style.display = 'block';
+  e.textContent = msg;
+}
+
+async function load(pm) {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('content').style.display = 'none';
+  try {
+    const r = await fetch(`/api/kpis?pm=${encodeURIComponent(pm)}`);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+    history.replaceState(null, '', `?pm=${encodeURIComponent(pm)}`);
+    render(j);
+  } catch (e) { showErr(`Failed to load: ${e.message}`); }
+}
+
+document.getElementById('pmSelect').addEventListener('change', e => load(e.target.value));
+
+// CSV upload flow
+const modal = document.getElementById('modalBg');
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const preview = document.getElementById('preview');
+const submitBtn = document.getElementById('submitUpload');
+let pendingCSV = null, pendingName = null;
+
+document.getElementById('openUpload').onclick = () => modal.classList.add('active');
+document.getElementById('cancelUpload').onclick = () => { modal.classList.remove('active'); resetUpload(); };
+dropZone.onclick = () => fileInput.click();
+['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('drag'); }));
+dropZone.addEventListener('drop', e => { if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+function resetUpload() {
+  pendingCSV = null; pendingName = null;
+  preview.style.display = 'none'; preview.textContent = '';
+  submitBtn.disabled = true; fileInput.value = '';
+}
+
+function handleFile(file) {
+  pendingName = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    pendingCSV = e.target.result;
+    preview.style.display = 'block';
+    preview.textContent = pendingCSV.split(/\r?\n/).slice(0, 6).join('\n') + (pendingCSV.split(/\r?\n/).length > 6 ? '\n…' : '');
+    submitBtn.disabled = false;
+  };
+  reader.readAsText(file);
+}
+
+submitBtn.onclick = async () => {
+  submitBtn.disabled = true; submitBtn.textContent = 'Uploading…';
+  try {
+    const r = await fetch(`/api/upload?filename=${encodeURIComponent(pendingName)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/csv' },
+      body: pendingCSV,
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+    alert(`Saved ${j.saved} row(s). ${j.errors?.length ? j.errors.length + ' skipped.' : ''}`);
+    modal.classList.remove('active'); resetUpload();
+    load(document.getElementById('pmSelect').value);
+  } catch (e) {
+    alert(`Upload failed: ${e.message}`);
+  } finally {
+    submitBtn.disabled = false; submitBtn.textContent = 'Upload';
+  }
+};
+
+// Initial load
+const urlPM = new URLSearchParams(location.search).get('pm') || 'ahmed';
+load(urlPM);
+</script>
+</body>
+</html>

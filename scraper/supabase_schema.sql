@@ -200,3 +200,49 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_asin_list_sku ON asin_list (sku);
 CREATE INDEX IF NOT EXISTS idx_asin_list_asin ON asin_list (asin);
 CREATE INDEX IF NOT EXISTS idx_asin_list_active ON asin_list (active) WHERE active = true;
 CREATE INDEX IF NOT EXISTS idx_asin_list_brand ON asin_list (brand);
+
+
+-- ============================================================
+-- PM ↔ ASIN ASSIGNMENTS
+-- Which PM owns which ASIN. Synced nightly from Monday.com.
+-- Used by the PM KPI tracker to scope every metric to one PM's portfolio.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS pm_asin_assignments (
+  pm_slug       TEXT NOT NULL,
+  pm_name       TEXT,
+  asin          TEXT NOT NULL,
+  sku           TEXT,
+  brand         TEXT,
+  synced_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (pm_slug, asin)
+);
+
+CREATE INDEX IF NOT EXISTS idx_pm_assign_asin ON pm_asin_assignments (asin);
+CREATE INDEX IF NOT EXISTS idx_pm_assign_slug ON pm_asin_assignments (pm_slug);
+
+
+-- ============================================================
+-- PM KPI WEEKLY UPLOADS
+-- One row per PM per ISO-week. Populated by Power BI CSV upload
+-- from the PM KPI tracker UI. Holds the metrics that aren't yet
+-- auto-scraped (margin, ACOS/TACOS, YoY growth, market share, promo rev).
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS pm_kpi_weekly (
+  pm_slug                  TEXT NOT NULL,
+  week_start               DATE NOT NULL,
+  margin_pct               NUMERIC(5,2),
+  tacos_pct                NUMERIC(5,2),
+  acos_pct                 NUMERIC(5,2),
+  yoy_growth_pct           NUMERIC(6,2),
+  market_share_delta_pct   NUMERIC(6,2),
+  promo_revenue_actual     NUMERIC(12,2),
+  promo_revenue_target     NUMERIC(12,2),
+  source_file              TEXT,
+  uploaded_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (pm_slug, week_start)
+);
+
+CREATE INDEX IF NOT EXISTS idx_pm_kpi_weekly_slug_date
+  ON pm_kpi_weekly (pm_slug, week_start DESC);

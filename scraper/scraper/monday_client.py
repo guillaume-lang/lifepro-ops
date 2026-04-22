@@ -134,3 +134,83 @@ def _safe_float(val):
         return round(float(val), 1) if val else None
     except (ValueError, TypeError):
         return None
+
+
+# ============================================================
+# PM ↔ ASIN SYNC
+# Pulls the PM-owner column from the PDP Status board and writes
+# pm_asin_assignments to Supabase for the PM KPI tracker.
+# Set MONDAY_PM_COLUMN_ID env var to the person-type column holding
+# the PM owner (e.g. "person" or "people_mkxxxxx").
+# ============================================================
+
+PM_COLUMN_ID = os.getenv("MONDAY_PM_COLUMN_ID", "multiple_person_mknhjhps")
+
+
+def _pm_slug(name: str | None) -> str:
+    if not name:
+        return ""
+    return name.strip().lower().split()[0]
+
+
+async def fetch_pm_assignments() -> List[Dict]:
+    """Fetch (pm_name, pm_slug, asin, sku, brand) for all active PDP items."""
+    await test_connection()
+
+    rows: List[Dict] = []
+    cursor = None
+    async with httpx.AsyncClient(timeout=60) as client:
+        while True:
+            cursor_clause = f', cursor: "{cursor}"' if cursor else ""
+            query = f"""
+            {{
+              boards(ids: [{BOARD_ID}]) {{
+                items_page(limit: 100{cursor_clause}) {{
+                  cursor
+                  items {{
+                    name
+                    column_values(ids: [
+                      "text_mknhd0s7",
+                      "color_mktjf611",
+                      "{PM_COLUMN_ID}"
+                    ]) {{
+                      id
+                      text
+                      value
+                    }}
+                  }}
+                }}
+              }}
+            }}
+            """
+            resp = await client.post(MONDAY_API_URL, json={"query": query}, headers=HEADERS)
+            resp.raise_for_status()
+            data = resp.json()
+            if "errors" in data:
+                print(f"[monday] PM sync error: {data['errors']}")
+                break
+
+            page = data["data"]["boards"][0]["items_page"]
+            for item in page["items"]:
+                cols = {c["id"]: c for c in item["column_values"]}
+                asin = (cols.get("text_mknhd0s7", {}).get("text") or "").strip()
+                if not asin or not re.match(r"^B[0-9A-Z]{9}$", asin):
+                    continue
+                pm_name = (cols.get(PM_COLUMN_ID, {}).get("text") or "").strip()
+                if not pm_name:
+                    continue
+                rows.append({
+                    "pm_name": pm_name,
+                    "pm_slug": _pm_slug(pm_name),
+                    "asin": asin,
+                    "sku": item["name"],
+                    "brand": (cols.get("color_mktjf611", {}).get("text") or "") or None,
+                })
+
+            cursor = page.get("cursor")
+            print(f"[monday] PM sync: {len(rows)} rows so far...")
+            if not cursor:
+                break
+
+    print(f"[monday] PM sync complete: {len(rows)} ASIN assignments")
+    return rows
