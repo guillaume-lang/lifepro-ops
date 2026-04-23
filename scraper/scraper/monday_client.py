@@ -5,8 +5,12 @@ from typing import List, Dict
 
 MONDAY_API_URL = "https://api.monday.com/v2"
 _RAW_TOKEN = os.environ["MONDAY_API_TOKEN"].strip()
-# Monday personal tokens are raw JWTs - strip "Bearer " if accidentally included
-MONDAY_TOKEN = _RAW_TOKEN.lstrip("Bearer ").lstrip("bearer ").strip()
+# Monday personal tokens are raw JWTs. Strip a literal "Bearer " prefix if
+# accidentally included — NOT with lstrip (that strips char sets, not prefixes,
+# and would eat the leading 'e' of an eyJ... JWT).
+if _RAW_TOKEN.lower().startswith("bearer "):
+    _RAW_TOKEN = _RAW_TOKEN[7:].strip()
+MONDAY_TOKEN = _RAW_TOKEN
 
 BOARD_ID = "8574487078"
 
