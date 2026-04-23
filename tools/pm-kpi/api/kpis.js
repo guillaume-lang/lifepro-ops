@@ -28,6 +28,10 @@ async function sb(path) {
   return r.json();
 }
 
+async function sbSafe(path) {
+  try { return await sb(path); } catch { return []; }
+}
+
 function isoWeekStart(d = new Date()) {
   const x = new Date(d);
   const day = (x.getUTCDay() + 6) % 7;
@@ -57,11 +61,11 @@ export default async function handler(req, res) {
 
   try {
     const [pms, assignments, weekly, reviews, deliveries] = await Promise.all([
-      sb(`pm_asin_assignments?select=pm_slug,pm_name&limit=5000`),
-      sb(`pm_asin_assignments?pm_slug=eq.${pm}&select=asin,sku,brand`),
-      sb(`pm_kpi_weekly?pm_slug=eq.${pm}&order=week_start.desc&limit=8`),
-      sb(`review_snapshots?select=asin,star_rating,scraped_at&order=scraped_at.desc&limit=5000`),
-      sb(`delivery_health_summary?select=asin,zips_checked,zips_in_stock`),
+      sbSafe(`pm_asin_assignments?select=pm_slug,pm_name&limit=5000`),
+      sbSafe(`pm_asin_assignments?pm_slug=eq.${pm}&select=asin,sku,brand`),
+      sbSafe(`pm_kpi_weekly?pm_slug=eq.${pm}&order=week_start.desc&limit=8`),
+      sbSafe(`review_snapshots?select=asin,star_rating,scraped_at&order=scraped_at.desc&limit=5000`),
+      sbSafe(`delivery_health_summary?select=asin,zips_checked,zips_in_stock`),
     ]);
 
     const pmSet = new Set(pms.map(r => r.pm_slug));
