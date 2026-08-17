@@ -50,6 +50,7 @@ skills/          # Claude skill files
   delivery-scraper.yml  # Runs daily at 6am EST
   review-monitor.yml    # Runs 4x daily
   pm-sync.yml           # Nightly — syncs PM ↔ ASIN assignments from Monday
+  datarova-sync.yml     # Daily 8am EST — Datarova keyword ranks → Monday board columns
 ```
 
 ## Setup
@@ -64,6 +65,7 @@ Go to repo Settings → Secrets → Actions and add:
 | `SUPABASE_SERVICE_KEY` | Supabase project → Settings → API → service_role key |
 | `TEAMS_WEBHOOK_URL` | Teams channel → Connectors → Incoming Webhook |
 | `MONDAY_PM_COLUMN_ID` | *(optional)* override default PM column `multiple_person_mknhjhps` — only needed if you rename the PM column on board 8574487078 |
+| `DATAROVA_API_KEY` | app.datarova.com → Settings → Connections → generate API key (see `docs/DATAROVA_API.md`) |
 
 ### Supabase Schema
 Run `scraper/supabase_schema.sql` once in your Supabase SQL editor.

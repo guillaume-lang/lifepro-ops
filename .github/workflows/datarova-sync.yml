@@ -1,0 +1,39 @@
+name: Datarova Rank Sync
+
+on:
+  schedule:
+    # Daily at 8am EST (1pm UTC) — after Keepa snapshot
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — fetch and compute but write nothing to Monday'
+        type: boolean
+        default: false
+      max_items:
+        description: 'Cap processed items (0 = all) — use 5 for a smoke test'
+        default: '0'
+
+jobs:
+  sync:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install httpx
+
+      - name: Sync Datarova ranks to Monday
+        env:
+          DATAROVA_API_KEY: ${{ secrets.DATAROVA_API_KEY }}
+          MONDAY_API_TOKEN: ${{ secrets.MONDAY_API_TOKEN }}
+          DATAROVA_DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+          DATAROVA_MAX_ITEMS: ${{ inputs.max_items || '0' }}
+        run: python scraper/datarova_sync.py
